@@ -1,0 +1,37 @@
+# Qt build artifacts
+*.o
+*.so
+*.a
+moc_*.cpp
+moc_*.h
+moc_predefs.h
+ui_*.h
+qrc_*.cpp
+Makefile
+Makefile.*
+.qmake.stash
+*.pro.user
+*.pro.user.*
+
+# Build directories
+build/
+build-*/
+debug/
+release/
+
+# Qt Creator
+*.autosave
+*.user
+*.user.*
+
+# Executables
+face/face
+*.exe
+*.app
+
+# IDE and system files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
