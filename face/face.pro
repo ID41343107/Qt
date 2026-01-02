@@ -33,6 +33,8 @@ unix:!macx {
 
 win32 {
     # Windows - use OpenCV installed in C:/opencv
+    # Note: Update the version number (4120) in the library names below 
+    # to match your installed OpenCV version (e.g., 4120 = OpenCV 4.12.0)
     INCLUDEPATH += C:/opencv/build/include
     
     CONFIG(debug, debug|release) {

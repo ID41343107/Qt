@@ -28,6 +28,7 @@ sudo apt-get install -y libopencv-dev pkg-config
 #### Windows
 1. Install Qt from [Qt Official Website](https://www.qt.io/download)
 2. Download OpenCV from [OpenCV Releases](https://opencv.org/releases/)
+   - **Note**: The project is currently configured for OpenCV 4.12.0. If using a different version, update the library names in `face.pro` (search for `opencv_world4120` and replace with your version).
 3. Extract OpenCV to `C:/opencv/`
 4. Ensure the following structure exists:
    - `C:/opencv/build/include/` (header files)
@@ -107,6 +108,7 @@ sudo apt-get install --reinstall libopencv-dev
 - Linux: Ensure user has access to `/dev/video0`
   ```bash
   sudo usermod -a -G video $USER
+  # Then logout and login, or run: newgrp video
   ```
 - Windows: Check camera permissions in Windows Settings
 - macOS: Grant camera access in System Preferences > Security & Privacy
