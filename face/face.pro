@@ -36,16 +36,18 @@ win32 {
     # Note: Update the version number (4120) in the library names below 
     # to match your installed OpenCV version (e.g., 4120 = OpenCV 4.12.0)
     INCLUDEPATH += C:/opencv/build/include
-    
-    CONFIG(debug, debug|release) {
-        # Debug 時連 debug 版的 lib
-        LIBS += -LC:/opencv/build/x64/vc16/lib \
-                -lopencv_world4120d
-    } else {
-        # Release 時連 release 版的 lib
-        LIBS += -LC:/opencv/build/x64/vc16/lib \
-                -lopencv_world4120
-    }
+}
+
+win32:CONFIG(debug, debug|release) {
+    # Debug 時連 debug 版的 lib
+    LIBS += -LC:/opencv/build/x64/vc16/lib \
+            -lopencv_world4120d
+}
+
+win32:CONFIG(release, debug|release) {
+    # Release 時連 release 版的 lib
+    LIBS += -LC:/opencv/build/x64/vc16/lib \
+            -lopencv_world4120
 }
 
 macx {

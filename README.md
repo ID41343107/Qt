@@ -100,9 +100,35 @@ sudo apt-get install --reinstall libopencv-dev
 ```
 
 ### Build errors on Windows
-- Ensure OpenCV path in `face.pro` matches your installation
-- Check that Qt can find the compiler (MSVC or MinGW)
-- Verify OpenCV DLLs are in system PATH
+
+#### Linker errors (ld returned 1 exit status)
+If you see linker errors like `collect2.exe error: ld returned 1 exit status`, check the following:
+
+1. **Verify OpenCV installation path**:
+   - Open `face.pro` and confirm the paths match your OpenCV installation
+   - Default path is `C:/opencv/build/`
+   - Check that these files exist:
+     - `C:/opencv/build/include/opencv2/opencv.hpp`
+     - `C:/opencv/build/x64/vc16/lib/opencv_world4120d.lib` (debug)
+     - `C:/opencv/build/x64/vc16/lib/opencv_world4120.lib` (release)
+
+2. **Update library version**:
+   - If using a different OpenCV version (e.g., 4.8.0), update the library names in `face.pro`
+   - Replace `opencv_world4120d` with `opencv_world480d` (debug)
+   - Replace `opencv_world4120` with `opencv_world480` (release)
+
+3. **Check compiler compatibility**:
+   - The default config uses `x64/vc16` (Visual Studio 2019)
+   - For MinGW, change path to `x64/mingw`
+   - For different Visual Studio versions: `vc15` (VS 2017), `vc14` (VS 2015)
+
+4. **Verify system PATH**:
+   - Add OpenCV DLLs to system PATH: `C:/opencv/build/x64/vc16/bin/`
+   - Restart Qt Creator after modifying PATH
+
+#### Other Windows issues
+- Ensure Qt can find the compiler (MSVC or MinGW)
+- If using Qt from online installer, ensure the correct kit is selected in Qt Creator
 
 ### Camera not working
 - Linux: Ensure user has access to `/dev/video0`
