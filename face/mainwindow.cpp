@@ -104,8 +104,9 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     // === 建立工作資料夾 ===
-    // 建立 work 資料夾用於存放輸出檔案
-    QDir workDir(QCoreApplication::applicationDirPath() + "/work");
+    // 建立 work 資料夾用於存放輸出檔案（使用跨平台路徑處理）
+    QString appDir = QCoreApplication::applicationDirPath();
+    QDir workDir(QDir(appDir).filePath("work"));
     if (!workDir.exists()) {
         if (workDir.mkpath(".")) {
             qDebug() << "Created work directory:" << workDir.absolutePath();
@@ -159,6 +160,10 @@ void MainWindow::updateFrame()
     // 辨識狀態旗標
     bool authorized = false;
     int userId = -1;
+    bool faceDetected = false;  // 追蹤是否偵測到任何人臉
+    
+    // 快取當前時間，確保本次更新中的時間計算一致
+    QDateTime currentTime = QDateTime::currentDateTime();
 
     // === 人臉偵測 ===
     // 只有在模型載入成功時才執行人臉偵測
@@ -181,6 +186,8 @@ void MainWindow::updateFrame()
             float conf = detMat.at<float>(i, 2);
             if (conf < 0.6) continue;  // 信心值低於 0.6 則忽略
 
+            faceDetected = true;  // 標記已偵測到人臉
+            
             // 取得邊界框座標 (已正規化為 0~1)
             int x1 = int(detMat.at<float>(i, 3) * frame.cols);
             int y1 = int(detMat.at<float>(i, 4) * frame.rows);
@@ -207,12 +214,12 @@ void MainWindow::updateFrame()
                 if (recognizedUserId != userId) {
                     // 新的辨識對象
                     recognizedUserId = userId;
-                    recognitionTime = QDateTime::currentDateTime();
+                    recognitionTime = currentTime;
                     hasWrittenFile = false;
                 }
                 
                 // 計算辨識經過的時間
-                qint64 elapsedSeconds = recognitionTime.secsTo(QDateTime::currentDateTime());
+                qint64 elapsedSeconds = recognitionTime.secsTo(currentTime);
                 
                 if (elapsedSeconds >= 3) {
                     // 3秒後變綠色
@@ -220,8 +227,8 @@ void MainWindow::updateFrame()
                     
                     // 寫入檔案（只寫一次）
                     if (!hasWrittenFile) {
-                        // 寫入文字檔
-                        QString filePath = workDirPath + "/友人到.txt";
+                        // 寫入文字檔（使用跨平台路徑處理）
+                        QString filePath = QDir(workDirPath).filePath("友人到.txt");
                         QFile file(filePath);
                         if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
                             QTextStream out(&file);
@@ -253,6 +260,12 @@ void MainWindow::updateFrame()
             
             // 在原始影像上繪製矩形框
             cv::rectangle(frame, faceRect, boxColor, 2);
+        }
+        
+        // 如果沒有偵測到任何人臉，重置辨識狀態
+        if (!faceDetected && recognizedUserId != -1) {
+            recognizedUserId = -1;
+            hasWrittenFile = false;
         }
     }
 
