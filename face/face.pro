@@ -60,6 +60,7 @@ unix {
 # ============================================================================
 win32 {
     # Check for environment variables first, then use defaults
+    # Note: $$(VAR) reads from environment, $(VAR) reads from qmake variable
     isEmpty(OPENCV_DIR) {
         OPENCV_DIR = $$(OPENCV_DIR)
     }

@@ -57,14 +57,14 @@ Setting environment variables is the easiest way to configure OpenCV:
 The version number is embedded in the library file names. Look in your OpenCV library folder:
 
 **For MinGW:** Check `C:\opencv\build\x64\mingw\lib\`
-- If you see `libopencv_world470.a` → your version is **470**
-- If you see `libopencv_world480.a` → your version is **480**
-- If you see `libopencv_world4120.a` → your version is **4120**
+- If you see `libopencv_world470.a` → your version is **470** (OpenCV 4.7.0)
+- If you see `libopencv_world480.a` → your version is **480** (OpenCV 4.8.0)
+- If you see `libopencv_world4120.a` → your version is **4120** (OpenCV 4.12.0)
 
 **For MSVC:** Check `C:\opencv\build\x64\vc16\lib\`
-- If you see `opencv_world470d.lib` or `opencv_world470.lib` → your version is **470**
-- If you see `opencv_world480d.lib` or `opencv_world480.lib` → your version is **480**
-- If you see `opencv_world4120d.lib` or `opencv_world4120.lib` → your version is **4120**
+- If you see `opencv_world470d.lib` or `opencv_world470.lib` → your version is **470** (OpenCV 4.7.0)
+- If you see `opencv_world480d.lib` or `opencv_world480.lib` → your version is **480** (OpenCV 4.8.0)
+- If you see `opencv_world4120d.lib` or `opencv_world4120.lib` → your version is **4120** (OpenCV 4.12.0)
 - Note: Files ending with 'd' are debug libraries, without 'd' are release libraries
 
 ### Step 4: Verify Compiler Match
@@ -109,10 +109,11 @@ If you don't want to use environment variables, you can edit the `face.pro` file
   - Check if `C:/opencv/build/x64/vc16/lib` exists (for MSVC)
   - If missing, download a different OpenCV package or build from source
 
-### Error: "Unknown Windows compiler. Trying MinGW paths."
+### Message: "Compiler: Unknown (trying MinGW paths)"
 - **Cause:** Qt cannot detect your compiler type automatically
 - **Impact:** The build will try MinGW paths by default, which may work if you're using MinGW
 - **Solution:** If you're using MSVC, make sure you open the project with the MSVC kit selected in Qt Creator
+- **Note:** This is an informational message, not an error. The build may still succeed if the paths are correct.
 
 ### Build succeeds but exe crashes immediately
 - **Cause:** OpenCV DLL files are not in PATH
