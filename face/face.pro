@@ -37,37 +37,39 @@ unix {
     }
 }
 
-# MinGW configuration (must come before MSVC to ensure proper matching)
-win32 {
+# Windows OpenCV configuration
+# IMPORTANT: Use the OpenCV version that matches your compiler!
+# - MinGW: Use libraries from opencv/build/x64/mingw/lib
+# - MSVC: Use libraries from opencv/build/x64/vc16/lib
+win32-msvc* {
+    # MSVC compiler configuration
     INCLUDEPATH += C:/opencv/build/include
-    
-    contains(QMAKE_COMPILER, g++) {
-        # MinGW compiler
-        CONFIG(debug, debug|release) {
-            LIBS += -LC:/opencv/build/x64/mingw/lib \
-                    -lopencv_world4120d
-        } else {
-            LIBS += -LC:/opencv/build/x64/mingw/lib \
-                    -lopencv_world4120
-        }
-    } else:contains(QMAKE_COMPILER, msvc) {
-        # MSVC compiler
-        CONFIG(debug, debug|release) {
-            LIBS += -LC:/opencv/build/x64/vc16/lib \
-                    -lopencv_world4120d
-        } else {
-            LIBS += -LC:/opencv/build/x64/vc16/lib \
-                    -lopencv_world4120
-        }
+    CONFIG(debug, debug|release) {
+        LIBS += -LC:/opencv/build/x64/vc16/lib \
+                -lopencv_world4120d
     } else {
-        # Fallback for other Windows compilers - try MinGW path
-        warning("Unknown Windows compiler, using MinGW library paths")
-        CONFIG(debug, debug|release) {
-            LIBS += -LC:/opencv/build/x64/mingw/lib \
-                    -lopencv_world4120d
-        } else {
-            LIBS += -LC:/opencv/build/x64/mingw/lib \
-                    -lopencv_world4120
-        }
+        LIBS += -LC:/opencv/build/x64/vc16/lib \
+                -lopencv_world4120
+    }
+} else:win32-g++ {
+    # MinGW compiler configuration
+    INCLUDEPATH += C:/opencv/build/include
+    CONFIG(debug, debug|release) {
+        LIBS += -LC:/opencv/build/x64/mingw/lib \
+                -lopencv_world4120d
+    } else {
+        LIBS += -LC:/opencv/build/x64/mingw/lib \
+                -lopencv_world4120
+    }
+} else:win32 {
+    # Fallback for other Windows compilers
+    warning("Unknown Windows compiler detected. Please check OpenCV library paths in face.pro")
+    INCLUDEPATH += C:/opencv/build/include
+    CONFIG(debug, debug|release) {
+        LIBS += -LC:/opencv/build/x64/mingw/lib \
+                -lopencv_world4120d
+    } else {
+        LIBS += -LC:/opencv/build/x64/mingw/lib \
+                -lopencv_world4120
     }
 }
