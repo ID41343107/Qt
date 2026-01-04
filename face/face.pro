@@ -25,10 +25,24 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 INCLUDEPATH += C:/opencv/build/include
 
-CONFIG(debug, debug|release) {
-    LIBS += -LC:/opencv/build/x64/vc16/lib \
-            -lopencv_world4120d
-} else {
-    LIBS += -LC:/opencv/build/x64/vc16/lib \
-            -lopencv_world4120
+# MinGW configuration
+win32-g++ {
+    CONFIG(debug, debug|release) {
+        LIBS += -LC:/opencv/build/x64/mingw/lib \
+                -lopencv_world4120d
+    } else {
+        LIBS += -LC:/opencv/build/x64/mingw/lib \
+                -lopencv_world4120
+    }
+}
+
+# MSVC configuration
+win32-msvc* {
+    CONFIG(debug, debug|release) {
+        LIBS += -LC:/opencv/build/x64/vc16/lib \
+                -lopencv_world4120d
+    } else {
+        LIBS += -LC:/opencv/build/x64/vc16/lib \
+                -lopencv_world4120
+    }
 }
