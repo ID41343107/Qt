@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 /**
  * @brief MainWindow 解構子
- * @description 釋放攝影機資源和 UI 物件
+ * @description 釋放 UI 物件
  */
 MainWindow::~MainWindow()
 {
