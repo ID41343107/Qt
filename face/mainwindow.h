@@ -54,6 +54,7 @@ private:
     bool recognizeFace(const cv::Mat &faceROI, int &outId);
     bool deleteUser(const QString &name);
     void sendDiscordMessage(const QString &text);
+    bool canSendNotification() const;
 
     QScopedPointer<QNetworkAccessManager> discordManager;
     QByteArray discordToken;

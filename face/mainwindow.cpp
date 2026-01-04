@@ -13,6 +13,10 @@
 #include <QRegularExpression>
 #include <cstdlib>
 
+namespace {
+constexpr int kNotificationCooldownMs = 3000;
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -24,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     if (channelEnv.isEmpty())
         channelEnv = qgetenv("DISCORD_CHANNEL_ID").trimmed();
     discordChannelId = QString::fromUtf8(channelEnv).trimmed();
-    discordMessageText = QString::fromLocal8Bit(qgetenv("DISCORD_MESSAGE")).trimmed();
+    discordMessageText = QString::fromUtf8(qgetenv("DISCORD_MESSAGE")).trimmed();
     if (discordMessageText.isEmpty()) {
         discordMessageText = tr("有人來", "Discord notification when a recognized user is detected");
     }
@@ -35,14 +39,18 @@ MainWindow::MainWindow(QWidget *parent)
         discordChannelId.clear();
     }
 
-    QString tokenString = QString::fromLocal8Bit(discordToken);
+    QString tokenString = QString::fromUtf8(discordToken);
     const QRegularExpression tokenWhitespace(QStringLiteral("\\s"));
+    bool tokenValid = true;
     if (!tokenString.isEmpty() && tokenString.contains(tokenWhitespace)) {
         qDebug() << "Discord notifier disabled: token contains whitespace";
-        discordToken.clear();
+        tokenValid = false;
     }
     tokenString.fill(u'0');
     tokenString.clear();
+    if (!tokenValid) {
+        discordToken.clear();
+    }
 
     if (discordToken.isEmpty() || discordChannelId.isEmpty()) {
         qDebug() << "Discord notifier disabled: missing DISCORD_TOKEN or CHANNEL_ID";
@@ -163,8 +171,7 @@ void MainWindow::updateFrame()
     if(authorized){
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
-        const bool cooldownReady = !notificationCooldown.isValid() || notificationCooldown.elapsed() >= 3000;
-        if(!notificationSent && !discordToken.isEmpty() && !discordChannelId.isEmpty() && cooldownReady){
+        if(canSendNotification()){
             QString message = discordMessageText;
             if(userId >= 0){
                 message += QString(" (ID: %1)").arg(userId);
@@ -381,4 +388,11 @@ void MainWindow::sendDiscordMessage(const QString &text)
         }
         reply->deleteLater();
     });
+}
+
+bool MainWindow::canSendNotification() const
+{
+    const bool hasConfig = !discordToken.isEmpty() && !discordChannelId.isEmpty();
+    const bool cooldownReady = !notificationCooldown.isValid() || notificationCooldown.elapsed() >= kNotificationCooldownMs;
+    return hasConfig && cooldownReady && !notificationSent;
 }
