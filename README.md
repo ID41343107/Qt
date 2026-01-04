@@ -5,7 +5,8 @@
 ## ⚠️ Windows 使用者必讀
 
 **遇到編譯錯誤？** 請先閱讀：
-- 📘 [Windows 設定指南](face/WINDOWS_SETUP.md) - 完整安裝步驟
+- 📘 [中文設定指南](face/WINDOWS_SETUP_CN.md) - 完整安裝步驟（中文）
+- 📘 [Windows Setup Guide](face/WINDOWS_SETUP.md) - Complete setup guide (English)
 - 🚀 [快速修復指南](face/OPENCV_QUICK_FIX.md) - 3 步驟快速解決
 
 常見錯誤：`'opencv2/opencv.hpp' file not found` → 參閱上方指南

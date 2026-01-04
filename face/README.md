@@ -5,7 +5,11 @@
 ## ⚠️ Windows 使用者必讀
 
 **如果遇到 `'opencv2/opencv.hpp' file not found` 編譯錯誤，請先閱讀：**
-### 📘 [Windows 安裝指南 (WINDOWS_SETUP.md)](WINDOWS_SETUP.md)
+
+### 📘 Windows 安裝指南
+- [中文指南 (WINDOWS_SETUP_CN.md)](WINDOWS_SETUP_CN.md) - 中文詳細說明
+- [English Guide (WINDOWS_SETUP.md)](WINDOWS_SETUP.md) - English detailed guide
+- [快速修復 (OPENCV_QUICK_FIX.md)](OPENCV_QUICK_FIX.md) - 3步驟快速解決
 
 該文件提供：
 - ✅ OpenCV 安裝與配置步驟
