@@ -11,6 +11,7 @@ ui_*.h
 # Build directories
 build/
 build-*/
+_build/
 debug/
 release/
 Debug/
