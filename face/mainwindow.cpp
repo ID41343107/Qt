@@ -11,6 +11,10 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
 
 /**
  * @brief MainWindow 建構子
@@ -99,6 +103,19 @@ MainWindow::MainWindow(QWidget *parent)
         return;
     }
 
+    // === 建立工作資料夾 ===
+    // 建立 work 資料夾用於存放輸出檔案（使用跨平台路徑處理）
+    QString appDir = QCoreApplication::applicationDirPath();
+    workDirPath = QDir(appDir).filePath("work");
+    QDir workDir(workDirPath);
+    if (!workDir.exists()) {
+        if (workDir.mkpath(".")) {
+            qDebug() << "Created work directory:" << workDir.absolutePath();
+        } else {
+            qDebug() << "Failed to create work directory";
+        }
+    }
+
     // === 定時器設定 ===
     // 建立影像更新定時器，每 60 毫秒更新一次 (約 16 FPS)
     timer = new QTimer(this);
@@ -143,6 +160,10 @@ void MainWindow::updateFrame()
     // 辨識狀態旗標
     bool authorized = false;
     int userId = -1;
+    bool faceDetected = false;  // 追蹤是否偵測到任何人臉
+    
+    // 快取當前時間，確保本次更新中的時間計算一致
+    QDateTime currentTime = QDateTime::currentDateTime();
 
     // === 人臉偵測 ===
     // 只有在模型載入成功時才執行人臉偵測
@@ -165,6 +186,8 @@ void MainWindow::updateFrame()
             float conf = detMat.at<float>(i, 2);
             if (conf < 0.6) continue;  // 信心值低於 0.6 則忽略
 
+            faceDetected = true;  // 標記已偵測到人臉
+            
             // 取得邊界框座標 (已正規化為 0~1)
             int x1 = int(detMat.at<float>(i, 3) * frame.cols);
             int y1 = int(detMat.at<float>(i, 4) * frame.rows);
@@ -173,8 +196,6 @@ void MainWindow::updateFrame()
 
             // 建立人臉矩形區域
             cv::Rect faceRect(cv::Point(x1,y1), cv::Point(x2,y2));
-            // 在原始影像上繪製綠色矩形框
-            cv::rectangle(frame, faceRect, cv::Scalar(0,255,0), 2);
 
             // 裁切人臉區域並進行預處理
             cv::Mat faceROI = frame(faceRect).clone();
@@ -182,9 +203,71 @@ void MainWindow::updateFrame()
             cv::resize(faceROI, faceROI, cv::Size(96,96));      // 調整為 96x96
 
             // === 人臉辨識 ===
-            if (recognizeFace(faceROI, userId)) {
+            bool isRecognized = recognizeFace(faceROI, userId);
+            
+            // 決定方框顏色和處理辨識結果
+            cv::Scalar boxColor;
+            if (isRecognized) {
                 authorized = true;  // 辨識成功
+                
+                // 檢查是否為新的辨識或同一人
+                if (recognizedUserId != userId) {
+                    // 新的辨識對象
+                    recognizedUserId = userId;
+                    recognitionTime = currentTime;
+                    hasWrittenFile = false;
+                }
+                
+                // 計算辨識經過的時間
+                qint64 elapsedSeconds = recognitionTime.secsTo(currentTime);
+                
+                if (elapsedSeconds >= 3) {
+                    // 3秒後變綠色
+                    boxColor = cv::Scalar(0, 255, 0);  // 綠色 (BGR格式)
+                    
+                    // 寫入檔案（只寫一次）
+                    if (!hasWrittenFile) {
+                        // 寫入文字檔（使用跨平台路徑處理）
+                        QString filePath = QDir(workDirPath).filePath("友人到.txt");
+                        QFile file(filePath);
+                        if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+                            QTextStream out(&file);
+                            // 使用辨識時間加上3秒作為確認時間（表示持續辨識3秒後的確認時刻）
+                            QDateTime confirmedTime = recognitionTime.addSecs(3);
+                            out << "友人到 - " << confirmedTime.toString("yyyy-MM-dd HH:mm:ss") 
+                                << " (ID: " << userId << ")" << "\n";
+                            file.close();
+                            qDebug() << "已寫入檔案:" << filePath;
+                            hasWrittenFile = true;  // 只有在成功寫入後才設定旗標
+                        } else {
+                            qDebug() << "無法開啟檔案:" << filePath;
+                        }
+                    }
+                } else {
+                    // 3秒內顯示紅色
+                    boxColor = cv::Scalar(0, 0, 255);  // 紅色 (BGR格式)
+                }
+            } else {
+                // 未辨識或陌生人，顯示紅色
+                boxColor = cv::Scalar(0, 0, 255);  // 紅色 (BGR格式)
+                
+                // 重置辨識狀態
+                if (recognizedUserId != -1) {
+                    recognizedUserId = -1;
+                    recognitionTime = QDateTime();  // 清空辨識時間
+                    hasWrittenFile = false;
+                }
             }
+            
+            // 在原始影像上繪製矩形框
+            cv::rectangle(frame, faceRect, boxColor, 2);
+        }
+        
+        // 如果沒有偵測到任何人臉，重置辨識狀態
+        if (!faceDetected && recognizedUserId != -1) {
+            recognizedUserId = -1;
+            recognitionTime = QDateTime();  // 清空辨識時間
+            hasWrittenFile = false;
         }
     }
 
