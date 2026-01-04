@@ -8,6 +8,7 @@
 #include <QScopedPointer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QSet>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
@@ -56,4 +57,5 @@ private:
     QString discordToken;
     QString discordChannelId;
     bool notificationSent = false;
+    QSet<QNetworkReply*> activeReplies;
 };

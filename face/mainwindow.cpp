@@ -104,6 +104,14 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     cap.release();
+    const auto repliesCopy = activeReplies;
+    for (QNetworkReply *reply : repliesCopy) {
+        if (reply) {
+            reply->abort();
+            reply->deleteLater();
+        }
+    }
+    activeReplies.clear();
     delete ui;
 }
 
@@ -348,14 +356,12 @@ void MainWindow::sendDiscordMessage(const QString &text)
     body["content"] = text;
 
     QNetworkReply *reply = discordManager->post(request, QJsonDocument(body).toJson());
-    connect(reply, &QNetworkReply::finished, reply, [this]() {
-        auto finishedReply = qobject_cast<QNetworkReply*>(sender());
-        if (!finishedReply) {
-            return;
+    activeReplies.insert(reply);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        activeReplies.remove(reply);
+        if (reply->error() != QNetworkReply::NoError) {
+            qDebug() << "Discord send failed:" << reply->errorString();
         }
-        if (finishedReply->error() != QNetworkReply::NoError) {
-            qDebug() << "Discord send failed:" << finishedReply->errorString();
-        }
-        finishedReply->deleteLater();
+        reply->deleteLater();
     });
 }
