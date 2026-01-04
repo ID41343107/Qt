@@ -31,6 +31,9 @@ Release/
 *.db
 *.db-journal
 
+# Work folder (output files)
+work/
+
 # Model files (large files, should be downloaded separately)
 *.caffemodel
 *.t7

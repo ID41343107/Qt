@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QList>
 #include <QString>
+#include <QDateTime>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
@@ -86,6 +87,11 @@ private:
     QTimer *timer;               // 影像更新定時器
     QTimer *doorTimer;           // 門禁控制定時器
     bool doorOpen = false;       // 門禁狀態旗標
+
+    // 辨識追蹤
+    int recognizedUserId = -1;   // 當前辨識到的使用者 ID
+    QDateTime recognitionTime;   // 辨識時間
+    bool hasWrittenFile = false; // 是否已寫入檔案
 
     // 使用者快取
     QList<User> usersCache;      // 使用者列表快取 (目前未使用)
