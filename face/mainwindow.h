@@ -92,6 +92,7 @@ private:
     int recognizedUserId = -1;   // 當前辨識到的使用者 ID
     QDateTime recognitionTime;   // 辨識時間
     bool hasWrittenFile = false; // 是否已寫入檔案
+    QString workDirPath;         // work 資料夾路徑
 
     // 使用者快取
     QList<User> usersCache;      // 使用者列表快取 (目前未使用)

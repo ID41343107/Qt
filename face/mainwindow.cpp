@@ -113,6 +113,7 @@ MainWindow::MainWindow(QWidget *parent)
             qDebug() << "Failed to create work directory";
         }
     }
+    workDirPath = workDir.absolutePath();  // 儲存路徑供後續使用
 
     // === 定時器設定 ===
     // 建立影像更新定時器，每 60 毫秒更新一次 (約 16 FPS)
@@ -220,12 +221,13 @@ void MainWindow::updateFrame()
                     // 寫入檔案（只寫一次）
                     if (!hasWrittenFile) {
                         // 寫入文字檔
-                        QDir workDir(QCoreApplication::applicationDirPath() + "/work");
-                        QString filePath = workDir.absolutePath() + "/友人到.txt";
+                        QString filePath = workDirPath + "/友人到.txt";
                         QFile file(filePath);
                         if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
                             QTextStream out(&file);
-                            out << "友人到 - " << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") 
+                            // 使用辨識時間加上3秒作為確認時間
+                            QDateTime confirmedTime = recognitionTime.addSecs(3);
+                            out << "友人到 - " << confirmedTime.toString("yyyy-MM-dd HH:mm:ss") 
                                 << " (ID: " << userId << ")" << "\n";
                             file.close();
                             qDebug() << "已寫入檔案:" << filePath;
