@@ -10,6 +10,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QUrl>
+#include <QRegularExpression>
 #include <cstdlib>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -18,10 +19,23 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     discordManager.reset(new QNetworkAccessManager(this));
-    discordToken = QString::fromLocal8Bit(qgetenv("DISCORD_TOKEN"));
-    discordChannelId = QString::fromLocal8Bit(qgetenv("CHANNEL_ID"));
+    discordToken = QString::fromLocal8Bit(qgetenv("DISCORD_TOKEN")).trimmed();
+    discordChannelId = QString::fromLocal8Bit(qgetenv("CHANNEL_ID")).trimmed();
     if (discordChannelId.isEmpty())
-        discordChannelId = QString::fromLocal8Bit(qgetenv("DISCORD_CHANNEL_ID"));
+        discordChannelId = QString::fromLocal8Bit(qgetenv("DISCORD_CHANNEL_ID")).trimmed();
+
+    const QRegularExpression idPattern(QStringLiteral("^\\d+$"));
+    if (!discordChannelId.isEmpty() && !idPattern.match(discordChannelId).hasMatch()) {
+        qDebug() << "Discord notifier disabled: invalid CHANNEL_ID format";
+        discordChannelId.clear();
+    }
+
+    const QRegularExpression tokenWhitespace(QStringLiteral("\\s"));
+    if (!discordToken.isEmpty() && discordToken.contains(tokenWhitespace)) {
+        qDebug() << "Discord notifier disabled: token contains whitespace";
+        discordToken.clear();
+    }
+
     if (discordToken.isEmpty() || discordChannelId.isEmpty()) {
         qDebug() << "Discord notifier disabled: missing DISCORD_TOKEN or CHANNEL_ID";
     }
@@ -134,7 +148,7 @@ void MainWindow::updateFrame()
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
         if(!notificationSent && !discordToken.isEmpty() && !discordChannelId.isEmpty()){
-            QString message = "有人來";
+            QString message = tr("有人來");
             if(userId >= 0){
                 message += QString(" (ID: %1)").arg(userId);
             }
