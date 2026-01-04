@@ -19,7 +19,7 @@ CXXFLAGS      = -fno-keep-inline-dllexport -g -std=gnu++1z -Wall -Wextra -Wextra
 INCPATH       = -I../../../face -I. -IC:/opencv/build/include -IC:/Qt/6.9.2/mingw_64/include -IC:/Qt/6.9.2/mingw_64/include/QtWidgets -IC:/Qt/6.9.2/mingw_64/include/QtGui -IC:/Qt/6.9.2/mingw_64/include/QtSql -IC:/Qt/6.9.2/mingw_64/include/QtCore -Idebug -I. -I/include -IC:/Qt/6.9.2/mingw_64/mkspecs/win32-g++ 
 LINKER      =        g++
 LFLAGS        =        -Wl,-subsystem,windows -mthreads
-LIBS        =        -LC:\opencv\build\x64\mingw\lib -lopencv_world4120d C:\Qt\6.9.2\mingw_64\lib\libQt6Widgets.a C:\Qt\6.9.2\mingw_64\lib\libQt6Gui.a C:\Qt\6.9.2\mingw_64\lib\libQt6Sql.a C:\Qt\6.9.2\mingw_64\lib\libQt6Core.a -lmingw32 C:\Qt\6.9.2\mingw_64\lib\libQt6EntryPoint.a -lshell32  
+LIBS        =        -LC:\opencv\build\x64\vc16\lib -lopencv_world4120d C:\Qt\6.9.2\mingw_64\lib\libQt6Widgets.a C:\Qt\6.9.2\mingw_64\lib\libQt6Gui.a C:\Qt\6.9.2\mingw_64\lib\libQt6Sql.a C:\Qt\6.9.2\mingw_64\lib\libQt6Core.a -lmingw32 C:\Qt\6.9.2\mingw_64\lib\libQt6EntryPoint.a -lshell32  
 QMAKE         = C:\Qt\6.9.2\mingw_64\bin\qmake.exe
 DEL_FILE      = del
 CHK_DIR_EXISTS= if not exist
@@ -317,9 +317,6 @@ debug/moc_mainwindow.cpp: ../../mainwindow.h \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/QTimer \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/qtimer.h \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/QString \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/QDateTime \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qdatetime.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qcalendar.h \
 		C:/opencv/build/include/opencv2/opencv.hpp \
 		C:/opencv/build/include/opencv2/opencv_modules.hpp \
 		C:/opencv/build/include/opencv2/core.hpp \
@@ -669,9 +666,6 @@ debug/main.o: ../../main.cpp ../../mainwindow.h \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/QTimer \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/qtimer.h \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/QString \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/QDateTime \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qdatetime.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qcalendar.h \
 		C:/opencv/build/include/opencv2/opencv.hpp \
 		C:/opencv/build/include/opencv2/opencv_modules.hpp \
 		C:/opencv/build/include/opencv2/core.hpp \
@@ -998,9 +992,6 @@ debug/mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/QTimer \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/qtimer.h \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/QString \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/QDateTime \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qdatetime.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qcalendar.h \
 		C:/opencv/build/include/opencv2/opencv.hpp \
 		C:/opencv/build/include/opencv2/opencv_modules.hpp \
 		C:/opencv/build/include/opencv2/core.hpp \
@@ -1143,16 +1134,7 @@ debug/mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		C:/Qt/6.9.2/mingw_64/include/QtSql/QSqlQuery \
 		C:/Qt/6.9.2/mingw_64/include/QtSql/qsqlquery.h \
 		C:/Qt/6.9.2/mingw_64/include/QtSql/QSqlError \
-		C:/Qt/6.9.2/mingw_64/include/QtSql/qsqlerror.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/QDir \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qdir.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qdirlisting.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qfiledevice.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qfile.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qfileinfo.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/qtimezone.h \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/QFile \
-		C:/Qt/6.9.2/mingw_64/include/QtCore/QTextStream
+		C:/Qt/6.9.2/mingw_64/include/QtSql/qsqlerror.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\mainwindow.o ..\..\mainwindow.cpp
 
 debug/moc_mainwindow.o: debug/moc_mainwindow.cpp 
