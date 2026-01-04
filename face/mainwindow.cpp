@@ -148,7 +148,7 @@ void MainWindow::updateFrame()
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
         if(!notificationSent && !discordToken.isEmpty() && !discordChannelId.isEmpty()){
-            QString message = tr("有人來");
+            QString message = tr("有人來", "Discord notification when a recognized user is detected");
             if(userId >= 0){
                 message += QString(" (ID: %1)").arg(userId);
             }
@@ -348,10 +348,14 @@ void MainWindow::sendDiscordMessage(const QString &text)
     body["content"] = text;
 
     QNetworkReply *reply = discordManager->post(request, QJsonDocument(body).toJson());
-    connect(reply, &QNetworkReply::finished, reply, [reply]() {
-        if (reply->error() != QNetworkReply::NoError) {
-            qDebug() << "Discord send failed:" << reply->errorString();
+    connect(reply, &QNetworkReply::finished, reply, [this]() {
+        auto finishedReply = qobject_cast<QNetworkReply*>(sender());
+        if (!finishedReply) {
+            return;
         }
-        reply->deleteLater();
+        if (finishedReply->error() != QNetworkReply::NoError) {
+            qDebug() << "Discord send failed:" << finishedReply->errorString();
+        }
+        finishedReply->deleteLater();
     });
 }
