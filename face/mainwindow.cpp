@@ -63,8 +63,8 @@ MainWindow::MainWindow(QWidget *parent)
     // res10_300x300_ssd_iter_140000.caffemodel: 訓練好的權重
     try {
         faceNet = cv::dnn::readNetFromCaffe(
-            (basePath + "deploy.prototxt").toStdString(),
-            (basePath + "res10_300x300_ssd_iter_140000.caffemodel").toStdString()
+            (basePath + MODEL_FACE_PROTOTXT).toStdString(),
+            (basePath + MODEL_FACE_DETECTOR).toStdString()
             );
     } catch (const cv::Exception& e) {
         qDebug() << "Failed to load face detection model:" << e.what();
@@ -74,18 +74,18 @@ MainWindow::MainWindow(QWidget *parent)
     // 將人臉影像轉換為 128 維特徵向量
     try {
         embedNet = cv::dnn::readNetFromTorch(
-            (basePath + "openface_nn4.small2.v1.t7").toStdString()
+            (basePath + MODEL_FACE_EMBEDDING).toStdString()
             );
     } catch (const cv::Exception& e) {
         qDebug() << "Failed to load face embedding model:" << e.what();
     }
 
     // 檢查模型是否載入成功
-    if (faceNet.empty() || embedNet.empty()) {
+    if (!isModelsLoaded()) {
         qDebug() << "DNN model load FAILED";
         qDebug() << "Please download the required model files:";
-        qDebug() << "  1. res10_300x300_ssd_iter_140000.caffemodel";
-        qDebug() << "  2. openface_nn4.small2.v1.t7";
+        qDebug() << "  1." << MODEL_FACE_DETECTOR;
+        qDebug() << "  2." << MODEL_FACE_EMBEDDING;
         qDebug() << "Place them in:" << basePath;
     } else {
         qDebug() << "DNN models loaded OK";
@@ -146,7 +146,7 @@ void MainWindow::updateFrame()
 
     // === 人臉偵測 ===
     // 只有在模型載入成功時才執行人臉偵測
-    if (!faceNet.empty() && !embedNet.empty()) {
+    if (isModelsLoaded()) {
         // 建立輸入 blob (Binary Large Object)
         // 參數: 影像, 縮放因子, 輸入尺寸, 均值減法 (BGR 順序), 不交換 R 和 B, 不裁切
         cv::Mat blob = cv::dnn::blobFromImage(frame, 1.0, cv::Size(300,300),
@@ -199,7 +199,7 @@ void MainWindow::updateFrame()
             doorOpen = true;
             doorTimer->start(3000);  // 3000 毫秒後自動關閉
         }
-    } else if (faceNet.empty() || embedNet.empty()) {
+    } else if (!isModelsLoaded()) {
         // 模型未載入，顯示警告訊息
         ui->label_status->setText("Models Not Loaded\nCamera Only Mode");
         ui->label_status->setStyleSheet("color:orange; font-weight:bold;");
@@ -227,7 +227,7 @@ void MainWindow::updateFrame()
 void MainWindow::on_pushButton_register_clicked()
 {
     // === 檢查模型是否載入 ===
-    if (faceNet.empty() || embedNet.empty()) {
+    if (!isModelsLoaded()) {
         ui->label_status->setText("Models not loaded\nCannot register");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
         return;
@@ -453,4 +453,13 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
 
     // 沒有找到匹配的人臉
     return false;
+}
+
+/**
+ * @brief 檢查深度學習模型是否已載入
+ * @return 模型已載入返回 true，否則返回 false
+ */
+bool MainWindow::isModelsLoaded() const
+{
+    return !faceNet.empty() && !embedNet.empty();
 }

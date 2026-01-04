@@ -90,6 +90,17 @@ private:
     // 使用者快取
     QList<User> usersCache;      // 使用者列表快取 (目前未使用)
 
+    // 模型檔案常數
+    const QString MODEL_FACE_DETECTOR = "res10_300x300_ssd_iter_140000.caffemodel";
+    const QString MODEL_FACE_PROTOTXT = "deploy.prototxt";
+    const QString MODEL_FACE_EMBEDDING = "openface_nn4.small2.v1.t7";
+
+    /**
+     * @brief 檢查深度學習模型是否已載入
+     * @return 模型已載入返回 true，否則返回 false
+     */
+    bool isModelsLoaded() const;
+
     /**
      * @brief 新增人臉資料到資料庫
      * @param name 使用者姓名
