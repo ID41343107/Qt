@@ -57,11 +57,27 @@ win32 {
     # Detect compiler type
     win32-msvc* {
         message("Detected MSVC compiler")
-        OPENCV_LIB_DIR = $$OPENCV_DIR/x64/vc16/lib
+        OPENCV_LIB_DIR = $$shell_path($$OPENCV_DIR/x64/vc16/lib)
+        message("OpenCV library directory: $$OPENCV_LIB_DIR")
+        
         CONFIG(debug, debug|release) {
-            LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}d
+            OPENCV_LIB_SUFFIX = d
+            BUILD_TYPE = debug
         } else {
-            LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}
+            OPENCV_LIB_SUFFIX = 
+            BUILD_TYPE = release
+        }
+        
+        # Add library linking flags
+        LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}$${OPENCV_LIB_SUFFIX}
+        
+        # Check if library file exists and provide diagnostic information
+        OPENCV_LIB_FILE = $$OPENCV_LIB_DIR/opencv_world$${OPENCV_VERSION}$${OPENCV_LIB_SUFFIX}.lib
+        exists($$OPENCV_LIB_FILE) {
+            message("Found $$BUILD_TYPE library at: $$OPENCV_LIB_FILE")
+        } else {
+            warning("$$title($$BUILD_TYPE) library not found at: $$OPENCV_LIB_FILE")
+            warning("Please check your OpenCV installation and version number")
         }
     } else:win32-g++ {
         message("Detected MinGW compiler")
@@ -70,27 +86,28 @@ win32 {
         message("OpenCV library directory: $$OPENCV_LIB_DIR")
         
         CONFIG(debug, debug|release) {
-            # Use full library path as fallback for MinGW linking issues
-            LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}d
-            # Also try absolute path as backup
-            exists($$OPENCV_LIB_DIR/libopencv_world$${OPENCV_VERSION}d.a) {
-                message("Found debug library at: $$OPENCV_LIB_DIR/libopencv_world$${OPENCV_VERSION}d.a")
-            } else {
-                warning("Debug library not found at: $$OPENCV_LIB_DIR/libopencv_world$${OPENCV_VERSION}d.a")
-                warning("Please check your OpenCV installation and version number")
-            }
+            OPENCV_LIB_SUFFIX = d
+            BUILD_TYPE = debug
         } else {
-            LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}
-            exists($$OPENCV_LIB_DIR/libopencv_world$${OPENCV_VERSION}.a) {
-                message("Found release library at: $$OPENCV_LIB_DIR/libopencv_world$${OPENCV_VERSION}.a")
-            } else {
-                warning("Release library not found at: $$OPENCV_LIB_DIR/libopencv_world$${OPENCV_VERSION}.a")
-                warning("Please check your OpenCV installation and version number")
-            }
+            OPENCV_LIB_SUFFIX = 
+            BUILD_TYPE = release
+        }
+        
+        # Add library linking flags
+        LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}$${OPENCV_LIB_SUFFIX}
+        
+        # Check if library file exists and provide diagnostic information
+        OPENCV_LIB_FILE = $$OPENCV_LIB_DIR/libopencv_world$${OPENCV_VERSION}$${OPENCV_LIB_SUFFIX}.a
+        exists($$OPENCV_LIB_FILE) {
+            message("Found $$BUILD_TYPE library at: $$OPENCV_LIB_FILE")
+        } else {
+            warning("$$title($$BUILD_TYPE) library not found at: $$OPENCV_LIB_FILE")
+            warning("Please check your OpenCV installation and version number")
         }
     } else {
         warning("Unknown Windows compiler. Trying MinGW paths.")
         OPENCV_LIB_DIR = $$shell_path($$OPENCV_DIR/x64/mingw/lib)
+        
         CONFIG(debug, debug|release) {
             LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}d
         } else {
