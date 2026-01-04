@@ -14,6 +14,7 @@
 #include <cstdlib>
 
 namespace {
+// Discord 通知冷卻時間 (毫秒)，避免短時間內重複送出訊息
 constexpr int kNotificationCooldownMs = 3000;
 }
 
