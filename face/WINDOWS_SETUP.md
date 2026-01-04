@@ -62,9 +62,10 @@ The version number is embedded in the library file names. Look in your OpenCV li
 - If you see `libopencv_world4120.a` → your version is **4120**
 
 **For MSVC:** Check `C:\opencv\build\x64\vc16\lib\`
-- If you see `opencv_world470d.lib` → your version is **470**
-- If you see `opencv_world480d.lib` → your version is **480**
-- If you see `opencv_world4120d.lib` → your version is **4120**
+- If you see `opencv_world470d.lib` or `opencv_world470.lib` → your version is **470**
+- If you see `opencv_world480d.lib` or `opencv_world480.lib` → your version is **480**
+- If you see `opencv_world4120d.lib` or `opencv_world4120.lib` → your version is **4120**
+- Note: Files ending with 'd' are debug libraries, without 'd' are release libraries
 
 ### Step 4: Verify Compiler Match
 

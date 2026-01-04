@@ -19,7 +19,7 @@ error: 'opencv2/opencv.hpp' file not found
 
 #### Step 2: Find Your Version Number
 Open folder: `C:\opencv\build\x64\mingw\lib` (or `vc16\lib` for MSVC)
-Look for file like:
+Look for files like:
 - `libopencv_world470.a` → version = **470**
 - `libopencv_world480.a` → version = **480**
 - `libopencv_world4120.a` → version = **4120**

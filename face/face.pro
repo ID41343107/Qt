@@ -118,11 +118,9 @@ win32 {
     
     # Verify paths exist
     !exists($$OPENCV_DIR/include) {
-        error("OpenCV include directory not found: $$OPENCV_DIR/include")
-        error("Please install OpenCV or set OPENCV_DIR correctly!")
+        error("OpenCV include directory not found: $$OPENCV_DIR/include. Please install OpenCV or set OPENCV_DIR correctly!")
     }
     !exists($$OPENCV_LIB_DIR) {
-        error("OpenCV library directory not found: $$OPENCV_LIB_DIR")
-        error("Please check OPENCV_DIR and ensure OpenCV is built for your compiler!")
+        error("OpenCV library directory not found: $$OPENCV_LIB_DIR. Please check OPENCV_DIR and ensure OpenCV is built for your compiler!")
     }
 }
