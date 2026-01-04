@@ -35,8 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << "Failed to drop users table:" << q.lastError().text();
     }
 
-    if(!q.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)"))
+    if(!q.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")) {
         qDebug() << "Create table failed:" << q.lastError().text();
+    }
 
     ui->label_camera->setText("Camera preview unavailable (OpenCV removed)");
     ui->label_camera->setAlignment(Qt::AlignCenter);
@@ -91,7 +92,7 @@ void MainWindow::on_pushButton_register_clicked()
     } else {
         ui->label_status->setText("Register failed");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
-        qDebug() << "Insert failed:" << q.lastError().text();
+        qDebug() << "Register failed:" << q.lastError().text();
     }
 }
 
