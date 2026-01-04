@@ -168,20 +168,22 @@ cmake --build . --config Release
   ```
 - 檢查 `.pro` 檔案中的 OpenCV 路徑設定
 
-### Windows 連結器錯誤 (ld returned 1 exit status)
+### Windows 連結器錯誤 (collect2.exe: error: ld returned 1 exit status)
 
-這是最常見的 Windows 編譯問題。請依序檢查以下項目：
+這是最常見的 Windows 編譯問題。此錯誤表示連結器無法找到或正確連結 OpenCV 函式庫。請依序檢查以下項目：
 
 #### 1. 確認 OpenCV 已正確安裝
 檢查以下路徑是否存在：
-- MinGW 版本：`C:/opencv/build/x64/mingw/lib/libopencv_world4120d.a`
-- MSVC 版本：`C:/opencv/build/x64/vc16/lib/opencv_world4120d.lib`
+- **MinGW 版本**：`C:/opencv/build/x64/mingw/lib/libopencv_world4120d.a`（Debug）
+- **MinGW 版本**：`C:/opencv/build/x64/mingw/lib/libopencv_world4120.a`（Release）
+- **MSVC 版本**：`C:/opencv/build/x64/vc16/lib/opencv_world4120d.lib`（Debug）
+- **MSVC 版本**：`C:/opencv/build/x64/vc16/lib/opencv_world4120.lib`（Release）
 
 如果路徑不存在或版本號不同（如 470、480），請：
 
-**方法一：調整 face.pro 檔案**
+**方法一：調整 face.pro 檔案（推薦）**
 1. 開啟 `face/face.pro`
-2. 找到這幾行（約第 30-35 行）：
+2. 找到這幾行（約第 45-50 行）：
    ```qmake
    isEmpty(OPENCV_DIR) {
        OPENCV_DIR = C:/opencv/build
@@ -190,37 +192,102 @@ cmake --build . --config Release
        OPENCV_VERSION = 4120
    }
    ```
-3. 修改 `OPENCV_DIR` 為您的 OpenCV 安裝路徑
-4. 修改 `OPENCV_VERSION` 為您的版本號（如 `470` 或 `480`）
+3. 修改 `OPENCV_DIR` 為您的 OpenCV 安裝路徑（例如：`D:/opencv/build`）
+4. 修改 `OPENCV_VERSION` 為您的版本號：
+   - OpenCV 4.12.0 → `4120`
+   - OpenCV 4.10.0 → `4100`
+   - OpenCV 4.9.0 → `490`
+   - OpenCV 4.8.0 → `480`
+   - OpenCV 4.7.0 → `470`
 
-**方法二：下載正確的 OpenCV 版本**
+**方法二：使用環境變數設定（適合多專案共用）**
+在 Windows 系統中設定環境變數：
+- `OPENCV_DIR` = `C:/opencv/build`（或您的 OpenCV 路徑）
+- `OPENCV_VERSION` = `4120`（或您的版本號）
+
+**方法三：下載正確的 OpenCV 版本**
 - 從 [OpenCV Releases](https://opencv.org/releases/) 下載 Windows 版本
 - 確保下載的版本包含您使用的編譯器（MinGW 或 MSVC）
 - 解壓縮到 `C:/opencv`
 
 #### 2. 確認編譯器類型匹配
 在 Qt Creator 中：
-1. 查看「專案」→「建置套件」
+1. 查看「專案」→「建置套件（Kit）」
 2. 確認使用的編譯器（MinGW 或 MSVC）
 3. 確保 OpenCV 版本與編譯器匹配：
-   - **MinGW 64-bit** → 使用 `opencv/build/x64/mingw/lib`
-   - **MSVC 2019/2022** → 使用 `opencv/build/x64/vc16/lib`
+   - **MinGW 64-bit** → 必須使用 `opencv/build/x64/mingw/lib`
+   - **MSVC 2019/2022** → 必須使用 `opencv/build/x64/vc16/lib`
 
-#### 3. 執行完整重建
+**注意：** 不能混用！MinGW 編譯的程式不能連結 MSVC 編譯的函式庫，反之亦然。
+
+#### 3. 執行完整重建（重要！）
 1. 在 Qt Creator 中：「建置」→「清除全部」
-2. 「建置」→「執行 qmake」（重要！）
+2. **「建置」→「執行 qmake」**（這一步最重要！必須重新生成 Makefile）
 3. 「建置」→「重建專案」
 
-#### 4. 檢查建置輸出
-在「編譯輸出」視窗中查看：
-- `Using OpenCV directory: ...` - 確認路徑正確
-- `Detected MinGW compiler` 或 `Detected MSVC compiler` - 確認偵測正確
-- `OpenCV library directory: ...` - 確認函式庫路徑正確
+如果使用命令列：
+```cmd
+cd face\build\Desktop_Qt_6_9_2_MinGW_64_bit-Debug
+del Makefile*
+cd ..\..
+qmake face.pro
+mingw32-make clean
+mingw32-make
+```
 
-如果以上都無法解決，請提供：
-- 完整的建置輸出訊息
-- 您的 OpenCV 安裝路徑
-- Qt Creator 使用的編譯器類型
+#### 4. 檢查建置輸出
+現在的 face.pro 會顯示詳細的診斷訊息。在「編譯輸出」或「一般訊息」視窗中查看：
+
+成功範例：
+```
+Using OpenCV directory: C:/opencv/build
+Using OpenCV version: 4120
+Detected MinGW compiler
+OpenCV library directory: C:\opencv\build\x64\mingw\lib
+Found debug library at: C:\opencv\build\x64\mingw\lib/libopencv_world4120d.a
+```
+
+失敗範例：
+```
+Using OpenCV directory: C:/opencv/build
+Using OpenCV version: 4120
+Detected MinGW compiler
+OpenCV library directory: C:\opencv\build\x64\mingw\lib
+WARNING: Debug library not found at: C:\opencv\build\x64\mingw\lib/libopencv_world4120d.a
+WARNING: Please check your OpenCV installation and version number
+```
+
+如果看到 WARNING，表示函式庫檔案不存在，請檢查：
+- OpenCV 是否正確安裝
+- 版本號是否正確
+- 編譯器類型是否匹配
+
+#### 5. 常見問題與解決方案
+
+**問題：找不到 libopencv_world4120d.a**
+- 解決：檢查 OpenCV 版本號，可能是 470、480 等其他版本
+- 使用檔案總管瀏覽到 `C:\opencv\build\x64\mingw\lib`
+- 查看實際的 `.a` 檔案名稱，例如 `libopencv_world480d.a`
+- 在 face.pro 中設定 `OPENCV_VERSION = 480`
+
+**問題：路徑包含空格或非英文字元**
+- 解決：將 OpenCV 安裝到不含空格的英文路徑，例如 `C:/opencv`
+- 避免使用 `C:/Program Files/opencv` 等包含空格的路徑
+
+**問題：混用 Debug 和 Release 版本**
+- 解決：確保 Qt 專案的建置模式（Debug/Release）與 OpenCV 函式庫版本匹配
+- Debug 模式必須使用 `libopencv_world4120d.a`（有 d 後綴）
+- Release 模式必須使用 `libopencv_world4120.a`（無 d 後綴）
+
+**問題：使用預編譯的 OpenCV 但編譯器不匹配**
+- 解決：確認您的 MinGW 版本與 OpenCV 的預編譯版本相容
+- 或考慮從源碼編譯 OpenCV 以匹配您的編譯器
+
+如果以上都無法解決，請在 GitHub Issue 中提供：
+- 完整的建置輸出訊息（包括 qmake 和 make 的輸出）
+- 您的 OpenCV 安裝路徑和實際的函式庫檔案名稱
+- Qt Creator 使用的編譯器類型和版本
+- Qt 版本和 OpenCV 版本
 
 ### 辨識準確度問題
 - 確保光線充足且均勻
