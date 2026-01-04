@@ -103,6 +103,17 @@ MainWindow::MainWindow(QWidget *parent)
         return;
     }
 
+    // === 建立工作資料夾 ===
+    // 建立 work 資料夾用於存放輸出檔案
+    QDir workDir(QCoreApplication::applicationDirPath() + "/work");
+    if (!workDir.exists()) {
+        if (workDir.mkpath(".")) {
+            qDebug() << "Created work directory:" << workDir.absolutePath();
+        } else {
+            qDebug() << "Failed to create work directory";
+        }
+    }
+
     // === 定時器設定 ===
     // 建立影像更新定時器，每 60 毫秒更新一次 (約 16 FPS)
     timer = new QTimer(this);
@@ -208,13 +219,8 @@ void MainWindow::updateFrame()
                     
                     // 寫入檔案（只寫一次）
                     if (!hasWrittenFile) {
-                        // 建立 work 資料夾
-                        QDir workDir(QCoreApplication::applicationDirPath() + "/work");
-                        if (!workDir.exists()) {
-                            workDir.mkpath(".");
-                        }
-                        
                         // 寫入文字檔
+                        QDir workDir(QCoreApplication::applicationDirPath() + "/work");
                         QString filePath = workDir.absolutePath() + "/友人到.txt";
                         QFile file(filePath);
                         if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
@@ -223,8 +229,10 @@ void MainWindow::updateFrame()
                                 << " (ID: " << userId << ")" << "\n";
                             file.close();
                             qDebug() << "已寫入檔案:" << filePath;
+                            hasWrittenFile = true;  // 只有在成功寫入後才設定旗標
+                        } else {
+                            qDebug() << "無法開啟檔案:" << filePath;
                         }
-                        hasWrittenFile = true;
                     }
                 } else {
                     // 3秒內顯示紅色
