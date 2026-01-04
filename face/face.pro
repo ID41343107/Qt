@@ -28,7 +28,7 @@ unix {
     # Linux/Unix: Try to use pkg-config first
     CONFIG += link_pkgconfig
     PKGCONFIG += opencv4
-    
+
     # Fallback to manual configuration if pkg-config fails
     !packagesExist(opencv4) {
         INCLUDEPATH += /usr/local/include/opencv4
@@ -48,12 +48,12 @@ win32 {
     isEmpty(OPENCV_VERSION) {
         OPENCV_VERSION = 4120
     }
-    
+
     message("Using OpenCV directory: $$OPENCV_DIR")
     message("Using OpenCV version: $$OPENCV_VERSION")
-    
+
     INCLUDEPATH += $$OPENCV_DIR/include
-    
+
     # Detect compiler type
     win32-msvc* {
         message("Detected MSVC compiler")
@@ -80,6 +80,6 @@ win32 {
             LIBS += -L$$OPENCV_LIB_DIR -lopencv_world$${OPENCV_VERSION}
         }
     }
-    
+
     message("OpenCV library directory: $$OPENCV_LIB_DIR")
 }

@@ -161,7 +161,7 @@ void MainWindow::updateFrame()
     bool authorized = false;
     int userId = -1;
     bool faceDetected = false;  // 追蹤是否偵測到任何人臉
-    
+
     // 快取當前時間，確保本次更新中的時間計算一致
     QDateTime currentTime = QDateTime::currentDateTime();
 
@@ -172,11 +172,11 @@ void MainWindow::updateFrame()
         // 參數: 影像, 縮放因子, 輸入尺寸, 均值減法 (BGR 順序), 不交換 R 和 B, 不裁切
         cv::Mat blob = cv::dnn::blobFromImage(frame, 1.0, cv::Size(300,300),
                                               cv::Scalar(104,177,123), false, false);
-        
+
         // 設定網路輸入並執行前向傳播
         faceNet.setInput(blob);
         cv::Mat det = faceNet.forward();
-        
+
         // 將偵測結果轉換為 2D 矩陣 (每列代表一個偵測結果)
         cv::Mat detMat(det.size[2], det.size[3], CV_32F, det.ptr<float>());
 
@@ -187,7 +187,7 @@ void MainWindow::updateFrame()
             if (conf < 0.6) continue;  // 信心值低於 0.6 則忽略
 
             faceDetected = true;  // 標記已偵測到人臉
-            
+
             // 取得邊界框座標 (已正規化為 0~1)
             int x1 = int(detMat.at<float>(i, 3) * frame.cols);
             int y1 = int(detMat.at<float>(i, 4) * frame.rows);
@@ -204,12 +204,12 @@ void MainWindow::updateFrame()
 
             // === 人臉辨識 ===
             bool isRecognized = recognizeFace(faceROI, userId);
-            
+
             // 決定方框顏色和處理辨識結果
             cv::Scalar boxColor;
             if (isRecognized) {
                 authorized = true;  // 辨識成功
-                
+
                 // 檢查是否為新的辨識或同一人
                 if (recognizedUserId != userId) {
                     // 新的辨識對象
@@ -217,14 +217,14 @@ void MainWindow::updateFrame()
                     recognitionTime = currentTime;
                     hasWrittenFile = false;
                 }
-                
+
                 // 計算辨識經過的時間
                 qint64 elapsedSeconds = recognitionTime.secsTo(currentTime);
-                
+
                 if (elapsedSeconds >= 3) {
                     // 3秒後變綠色
                     boxColor = cv::Scalar(0, 255, 0);  // 綠色 (BGR格式)
-                    
+
                     // 寫入檔案（只寫一次）
                     if (!hasWrittenFile) {
                         // 寫入文字檔（使用跨平台路徑處理）
@@ -234,7 +234,7 @@ void MainWindow::updateFrame()
                             QTextStream out(&file);
                             // 使用辨識時間加上3秒作為確認時間（表示持續辨識3秒後的確認時刻）
                             QDateTime confirmedTime = recognitionTime.addSecs(3);
-                            out << "友人到 - " << confirmedTime.toString("yyyy-MM-dd HH:mm:ss") 
+                            out << "友人到 - " << confirmedTime.toString("yyyy-MM-dd HH:mm:ss")
                                 << " (ID: " << userId << ")" << "\n";
                             file.close();
                             qDebug() << "已寫入檔案:" << filePath;
@@ -250,7 +250,7 @@ void MainWindow::updateFrame()
             } else {
                 // 未辨識或陌生人，顯示紅色
                 boxColor = cv::Scalar(0, 0, 255);  // 紅色 (BGR格式)
-                
+
                 // 重置辨識狀態
                 if (recognizedUserId != -1) {
                     recognizedUserId = -1;
@@ -258,11 +258,11 @@ void MainWindow::updateFrame()
                     hasWrittenFile = false;
                 }
             }
-            
+
             // 在原始影像上繪製矩形框
             cv::rectangle(frame, faceRect, boxColor, 2);
         }
-        
+
         // 如果沒有偵測到任何人臉，重置辨識狀態
         if (!faceDetected && recognizedUserId != -1) {
             recognizedUserId = -1;
@@ -276,7 +276,7 @@ void MainWindow::updateFrame()
         // 辨識成功，顯示授權訊息
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
-        
+
         // 開啟門禁並啟動 3 秒計時器
         if(!doorOpen){
             doorOpen = true;
@@ -295,7 +295,7 @@ void MainWindow::updateFrame()
     // === 顯示影像 ===
     // 將影像從 BGR 轉換為 RGB (Qt 使用 RGB 格式)
     cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
-    
+
     // 建立 QImage 並轉換為 QPixmap 顯示在 UI 上
     QImage img(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
     ui->label_camera->setPixmap(QPixmap::fromImage(img)
@@ -515,7 +515,7 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
     {
         // 取得使用者 ID
         int id = q.value(0).toInt();
-        
+
         // 重建 128 維特徵向量
         cv::Mat dbVec(1,128,CV_32F);
         for(int i=0;i<128;i++){
@@ -525,7 +525,7 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
         // === 計算歐式距離 ===
         // 距離越小表示越相似
         float dist = cv::norm(vec - dbVec);
-        
+
         // 判斷是否為同一人 (閾值 0.8)
         if(dist < 0.8){
             qDebug() << "Recognized ID:" << id << "Distance:" << dist;

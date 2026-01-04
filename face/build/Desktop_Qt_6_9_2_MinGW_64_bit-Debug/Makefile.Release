@@ -1114,7 +1114,7 @@ release/mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		C:/opencv/build/include/opencv2/video.hpp \
 		C:/opencv/build/include/opencv2/video/tracking.hpp \
 		C:/opencv/build/include/opencv2/video/background_segm.hpp \
-		ui_mainwindow.h \
+		../../ui_mainwindow.h \
 		C:/Qt/6.9.2/mingw_64/include/QtCore/QVariant \
 		C:/Qt/6.9.2/mingw_64/include/QtWidgets/QApplication \
 		C:/Qt/6.9.2/mingw_64/include/QtWidgets/qapplication.h \
