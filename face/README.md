@@ -74,7 +74,7 @@ wget https://github.com/pyannote/pyannote-data/raw/master/openface.nn4.small2.v1
 
 ## 編譯與執行
 
-### 使用 qmake 編譯
+### 方法一：使用 qmake 編譯
 
 ```bash
 cd face/
@@ -82,11 +82,21 @@ qmake face.pro
 make
 ```
 
-### 使用 Qt Creator
+### 方法二：使用 CMake 編譯（推薦）
+
+```bash
+cd face/
+mkdir build
+cd build
+cmake ..
+make
+```
+
+### 方法三：使用 Qt Creator
 
 1. 開啟 Qt Creator
 2. 選擇「開啟專案」
-3. 選擇 `face/face.pro` 檔案
+3. 選擇 `face/face.pro` 或 `face/CMakeLists.txt` 檔案
 4. 設定建置套件（Kit）
 5. 點擊「建置」按鈕
 6. 點擊「執行」按鈕
@@ -97,6 +107,15 @@ make
 ```cmd
 cd face\
 msvc_make.bat
+```
+
+或使用 CMake：
+```cmd
+cd face\
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
 ```
 
 ## 功能說明
