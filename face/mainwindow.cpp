@@ -11,6 +11,10 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
 
 /**
  * @brief MainWindow 建構子
@@ -61,20 +65,32 @@ MainWindow::MainWindow(QWidget *parent)
     // 載入人臉偵測模型 (Caffe SSD)
     // deploy.prototxt: 網路架構定義
     // res10_300x300_ssd_iter_140000.caffemodel: 訓練好的權重
-    faceNet = cv::dnn::readNetFromCaffe(
-        (basePath + "deploy.prototxt").toStdString(),
-        (basePath + "res10_300x300_ssd_iter_140000.caffemodel").toStdString()
-        );
+    try {
+        faceNet = cv::dnn::readNetFromCaffe(
+            (basePath + MODEL_FACE_PROTOTXT).toStdString(),
+            (basePath + MODEL_FACE_DETECTOR).toStdString()
+            );
+    } catch (const cv::Exception& e) {
+        qDebug() << "Failed to load face detection model:" << e.what();
+    }
 
     // 載入人臉特徵提取模型 (OpenFace)
     // 將人臉影像轉換為 128 維特徵向量
-    embedNet = cv::dnn::readNetFromTorch(
-        (basePath + "openface_nn4.small2.v1.t7").toStdString()
-        );
+    try {
+        embedNet = cv::dnn::readNetFromTorch(
+            (basePath + MODEL_FACE_EMBEDDING).toStdString()
+            );
+    } catch (const cv::Exception& e) {
+        qDebug() << "Failed to load face embedding model:" << e.what();
+    }
 
     // 檢查模型是否載入成功
-    if (faceNet.empty() || embedNet.empty()) {
+    if (!isModelsLoaded()) {
         qDebug() << "DNN model load FAILED";
+        qDebug() << "Please download the required model files:";
+        qDebug() << "  1." << MODEL_FACE_DETECTOR;
+        qDebug() << "  2." << MODEL_FACE_EMBEDDING;
+        qDebug() << "Place them in:" << basePath;
     } else {
         qDebug() << "DNN models loaded OK";
     }
@@ -85,6 +101,19 @@ MainWindow::MainWindow(QWidget *parent)
     if (!cap.isOpened()) {
         qDebug() << "Camera open failed";
         return;
+    }
+
+    // === 建立工作資料夾 ===
+    // 建立 work 資料夾用於存放輸出檔案（使用跨平台路徑處理）
+    QString appDir = QCoreApplication::applicationDirPath();
+    workDirPath = QDir(appDir).filePath("work");
+    QDir workDir(workDirPath);
+    if (!workDir.exists()) {
+        if (workDir.mkpath(".")) {
+            qDebug() << "Created work directory:" << workDir.absolutePath();
+        } else {
+            qDebug() << "Failed to create work directory";
+        }
     }
 
     // === 定時器設定 ===
@@ -128,48 +157,117 @@ void MainWindow::updateFrame()
     cap >> frame;
     if (frame.empty()) return;  // 影像為空則跳過
 
-    // === 人臉偵測 ===
-    // 建立輸入 blob (Binary Large Object)
-    // 參數: 影像, 縮放因子, 輸入尺寸, 均值減法 (BGR 順序), 不交換 R 和 B, 不裁切
-    cv::Mat blob = cv::dnn::blobFromImage(frame, 1.0, cv::Size(300,300),
-                                          cv::Scalar(104,177,123), false, false);
-    
-    // 設定網路輸入並執行前向傳播
-    faceNet.setInput(blob);
-    cv::Mat det = faceNet.forward();
-    
-    // 將偵測結果轉換為 2D 矩陣 (每列代表一個偵測結果)
-    cv::Mat detMat(det.size[2], det.size[3], CV_32F, det.ptr<float>());
-
     // 辨識狀態旗標
     bool authorized = false;
     int userId = -1;
+    bool faceDetected = false;  // 追蹤是否偵測到任何人臉
+    
+    // 快取當前時間，確保本次更新中的時間計算一致
+    QDateTime currentTime = QDateTime::currentDateTime();
 
-    // === 處理每個偵測到的人臉 ===
-    for (int i = 0; i < detMat.rows; i++) {
-        // 取得信心值 (第 3 列)
-        float conf = detMat.at<float>(i, 2);
-        if (conf < 0.6) continue;  // 信心值低於 0.6 則忽略
+    // === 人臉偵測 ===
+    // 只有在模型載入成功時才執行人臉偵測
+    if (isModelsLoaded()) {
+        // 建立輸入 blob (Binary Large Object)
+        // 參數: 影像, 縮放因子, 輸入尺寸, 均值減法 (BGR 順序), 不交換 R 和 B, 不裁切
+        cv::Mat blob = cv::dnn::blobFromImage(frame, 1.0, cv::Size(300,300),
+                                              cv::Scalar(104,177,123), false, false);
+        
+        // 設定網路輸入並執行前向傳播
+        faceNet.setInput(blob);
+        cv::Mat det = faceNet.forward();
+        
+        // 將偵測結果轉換為 2D 矩陣 (每列代表一個偵測結果)
+        cv::Mat detMat(det.size[2], det.size[3], CV_32F, det.ptr<float>());
 
-        // 取得邊界框座標 (已正規化為 0~1)
-        int x1 = int(detMat.at<float>(i, 3) * frame.cols);
-        int y1 = int(detMat.at<float>(i, 4) * frame.rows);
-        int x2 = int(detMat.at<float>(i, 5) * frame.cols);
-        int y2 = int(detMat.at<float>(i, 6) * frame.rows);
+        // === 處理每個偵測到的人臉 ===
+        for (int i = 0; i < detMat.rows; i++) {
+            // 取得信心值 (第 3 列)
+            float conf = detMat.at<float>(i, 2);
+            if (conf < 0.6) continue;  // 信心值低於 0.6 則忽略
 
-        // 建立人臉矩形區域
-        cv::Rect faceRect(cv::Point(x1,y1), cv::Point(x2,y2));
-        // 在原始影像上繪製綠色矩形框
-        cv::rectangle(frame, faceRect, cv::Scalar(0,255,0), 2);
+            faceDetected = true;  // 標記已偵測到人臉
+            
+            // 取得邊界框座標 (已正規化為 0~1)
+            int x1 = int(detMat.at<float>(i, 3) * frame.cols);
+            int y1 = int(detMat.at<float>(i, 4) * frame.rows);
+            int x2 = int(detMat.at<float>(i, 5) * frame.cols);
+            int y2 = int(detMat.at<float>(i, 6) * frame.rows);
 
-        // 裁切人臉區域並進行預處理
-        cv::Mat faceROI = frame(faceRect).clone();
-        cv::cvtColor(faceROI, faceROI, cv::COLOR_BGR2RGB);  // 轉換為 RGB
-        cv::resize(faceROI, faceROI, cv::Size(96,96));      // 調整為 96x96
+            // 建立人臉矩形區域
+            cv::Rect faceRect(cv::Point(x1,y1), cv::Point(x2,y2));
 
-        // === 人臉辨識 ===
-        if (recognizeFace(faceROI, userId)) {
-            authorized = true;  // 辨識成功
+            // 裁切人臉區域並進行預處理
+            cv::Mat faceROI = frame(faceRect).clone();
+            cv::cvtColor(faceROI, faceROI, cv::COLOR_BGR2RGB);  // 轉換為 RGB
+            cv::resize(faceROI, faceROI, cv::Size(96,96));      // 調整為 96x96
+
+            // === 人臉辨識 ===
+            bool isRecognized = recognizeFace(faceROI, userId);
+            
+            // 決定方框顏色和處理辨識結果
+            cv::Scalar boxColor;
+            if (isRecognized) {
+                authorized = true;  // 辨識成功
+                
+                // 檢查是否為新的辨識或同一人
+                if (recognizedUserId != userId) {
+                    // 新的辨識對象
+                    recognizedUserId = userId;
+                    recognitionTime = currentTime;
+                    hasWrittenFile = false;
+                }
+                
+                // 計算辨識經過的時間
+                qint64 elapsedSeconds = recognitionTime.secsTo(currentTime);
+                
+                if (elapsedSeconds >= 3) {
+                    // 3秒後變綠色
+                    boxColor = cv::Scalar(0, 255, 0);  // 綠色 (BGR格式)
+                    
+                    // 寫入檔案（只寫一次）
+                    if (!hasWrittenFile) {
+                        // 寫入文字檔（使用跨平台路徑處理）
+                        QString filePath = QDir(workDirPath).filePath("友人到.txt");
+                        QFile file(filePath);
+                        if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+                            QTextStream out(&file);
+                            // 使用辨識時間加上3秒作為確認時間（表示持續辨識3秒後的確認時刻）
+                            QDateTime confirmedTime = recognitionTime.addSecs(3);
+                            out << "友人到 - " << confirmedTime.toString("yyyy-MM-dd HH:mm:ss") 
+                                << " (ID: " << userId << ")" << "\n";
+                            file.close();
+                            qDebug() << "已寫入檔案:" << filePath;
+                            hasWrittenFile = true;  // 只有在成功寫入後才設定旗標
+                        } else {
+                            qDebug() << "無法開啟檔案:" << filePath;
+                        }
+                    }
+                } else {
+                    // 3秒內顯示紅色
+                    boxColor = cv::Scalar(0, 0, 255);  // 紅色 (BGR格式)
+                }
+            } else {
+                // 未辨識或陌生人，顯示紅色
+                boxColor = cv::Scalar(0, 0, 255);  // 紅色 (BGR格式)
+                
+                // 重置辨識狀態
+                if (recognizedUserId != -1) {
+                    recognizedUserId = -1;
+                    recognitionTime = QDateTime();  // 清空辨識時間
+                    hasWrittenFile = false;
+                }
+            }
+            
+            // 在原始影像上繪製矩形框
+            cv::rectangle(frame, faceRect, boxColor, 2);
+        }
+        
+        // 如果沒有偵測到任何人臉，重置辨識狀態
+        if (!faceDetected && recognizedUserId != -1) {
+            recognizedUserId = -1;
+            recognitionTime = QDateTime();  // 清空辨識時間
+            hasWrittenFile = false;
         }
     }
 
@@ -184,6 +282,10 @@ void MainWindow::updateFrame()
             doorOpen = true;
             doorTimer->start(3000);  // 3000 毫秒後自動關閉
         }
+    } else if (!isModelsLoaded()) {
+        // 模型未載入，顯示警告訊息
+        ui->label_status->setText("Models Not Loaded\nCamera Only Mode");
+        ui->label_status->setStyleSheet("color:orange; font-weight:bold;");
     } else {
         // 未辨識到授權人臉，顯示鎖定訊息
         ui->label_status->setText("Door Locked");
@@ -207,6 +309,13 @@ void MainWindow::updateFrame()
  */
 void MainWindow::on_pushButton_register_clicked()
 {
+    // === 檢查模型是否載入 ===
+    if (!isModelsLoaded()) {
+        ui->label_status->setText("Models not loaded\nCannot register");
+        ui->label_status->setStyleSheet("color:red; font-weight:bold;");
+        return;
+    }
+
     // === 檢查姓名輸入 ===
     QString name = ui->lineEdit_name->text().trimmed();
     if(name.isEmpty()){
@@ -427,4 +536,13 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
 
     // 沒有找到匹配的人臉
     return false;
+}
+
+/**
+ * @brief 檢查深度學習模型是否已載入
+ * @return 模型已載入返回 true，否則返回 false
+ */
+bool MainWindow::isModelsLoaded() const
+{
+    return !faceNet.empty() && !embedNet.empty();
 }

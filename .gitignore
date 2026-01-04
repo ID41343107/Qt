@@ -1,0 +1,51 @@
+# Qt-specific
+*.pro.user
+*.pro.user.*
+.qmake.stash
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.autosave
+
+# Build directories
+build/
+build-*/
+debug/
+release/
+Debug/
+Release/
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.app
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Database files
+*.db
+*.db-journal
+
+# Work folder (output files)
+work/
+
+# Model files (large files, should be downloaded separately)
+*.caffemodel
+*.t7
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QList>
 #include <QString>
+#include <QDateTime>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
@@ -87,8 +88,25 @@ private:
     QTimer *doorTimer;           // 門禁控制定時器
     bool doorOpen = false;       // 門禁狀態旗標
 
+    // 辨識追蹤
+    int recognizedUserId = -1;   // 當前辨識到的使用者 ID
+    QDateTime recognitionTime;   // 辨識時間
+    bool hasWrittenFile = false; // 是否已寫入檔案
+    QString workDirPath;         // work 資料夾路徑
+
     // 使用者快取
     QList<User> usersCache;      // 使用者列表快取 (目前未使用)
+
+    // 模型檔案常數
+    inline static const QString MODEL_FACE_DETECTOR = "res10_300x300_ssd_iter_140000.caffemodel";
+    inline static const QString MODEL_FACE_PROTOTXT = "deploy.prototxt";
+    inline static const QString MODEL_FACE_EMBEDDING = "openface_nn4.small2.v1.t7";
+
+    /**
+     * @brief 檢查深度學習模型是否已載入
+     * @return 模型已載入返回 true，否則返回 false
+     */
+    bool isModelsLoaded() const;
 
     /**
      * @brief 新增人臉資料到資料庫
