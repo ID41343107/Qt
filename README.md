@@ -2,6 +2,16 @@
 
 基於 Qt 和 OpenCV 的人臉辨識門禁系統 (Face Recognition Access Control System)
 
+## ⚠️ Windows 使用者必讀
+
+**遇到編譯錯誤？** 請先閱讀：
+- 📘 [Windows 設定指南](face/WINDOWS_SETUP.md) - 完整安裝步驟
+- 🚀 [快速修復指南](face/OPENCV_QUICK_FIX.md) - 3 步驟快速解決
+
+常見錯誤：`'opencv2/opencv.hpp' file not found` → 參閱上方指南
+
+---
+
 ## 快速開始 (Quick Start)
 
 ### 1. 克隆專案
