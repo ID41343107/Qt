@@ -5,11 +5,57 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QUrl>
+#include <QRegularExpression>
+#include <cstdlib>
+
+namespace {
+constexpr int kNotificationCooldownMs = 3000;
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    // Discord 設定讀取（環境變數），未提供時視為停用
+    discordManager.reset(new QNetworkAccessManager(this));
+    discordToken = qgetenv("DISCORD_TOKEN").trimmed();
+    QByteArray channelEnv = qgetenv("CHANNEL_ID").trimmed();
+    if (channelEnv.isEmpty())
+        channelEnv = qgetenv("DISCORD_CHANNEL_ID").trimmed();
+    discordChannelId = QString::fromUtf8(channelEnv).trimmed();
+    discordMessageText = QString::fromUtf8(qgetenv("DISCORD_MESSAGE")).trimmed();
+    if (discordMessageText.isEmpty()) {
+        discordMessageText = tr("有人來", "Discord notification when a recognized user is detected");
+    }
+
+    const QRegularExpression idPattern(QStringLiteral("^\\d+$"));
+    if (!discordChannelId.isEmpty() && !idPattern.match(discordChannelId).hasMatch()) {
+        qDebug() << "Discord notifier disabled: invalid CHANNEL_ID format";
+        discordChannelId.clear();
+    }
+
+    QString tokenString = QString::fromUtf8(discordToken);
+    const QRegularExpression tokenWhitespace(QStringLiteral("\\s"));
+    bool tokenValid = true;
+    if (!tokenString.isEmpty() && tokenString.contains(tokenWhitespace)) {
+        qDebug() << "Discord notifier disabled: token contains whitespace";
+        tokenValid = false;
+    }
+    tokenString.fill(u'0');
+    tokenString.clear();
+    if (!tokenValid) {
+        discordToken.clear();
+    }
+
+    if (discordToken.isEmpty() || discordChannelId.isEmpty()) {
+        qDebug() << "Discord notifier disabled: missing DISCORD_TOKEN or CHANNEL_ID";
+    }
 
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("users.db");
@@ -75,6 +121,14 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     cap.release();
+    for (QNetworkReply *reply : activeReplies) {
+        if (reply) {
+            reply->abort();
+            reply->deleteLater();
+        }
+    }
+    activeReplies.clear();
+    discordToken.fill(0);
     delete ui;
 }
 
@@ -118,11 +172,21 @@ void MainWindow::updateFrame()
     if(authorized){
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
+        if(canSendNotification()){
+            QString message = discordMessageText;
+            if(userId >= 0){
+                message += QString(" (ID: %1)").arg(userId);
+            }
+            sendDiscordMessage(message);
+            notificationCooldown.restart();
+            notificationSent = true;
+        }
         if(!doorOpen){
             doorOpen = true;
             doorTimer->start(3000);
         }
     } else {
+        notificationSent = false;
         ui->label_status->setText("Door Locked");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
     }
@@ -294,4 +358,42 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
     }
 
     return false;
+}
+
+void MainWindow::sendDiscordMessage(const QString &text)
+{
+    if (discordToken.isEmpty() || discordChannelId.isEmpty() || !discordManager)
+        return;
+
+    QUrl url(QStringLiteral("https://discord.com"));
+    url.setPath(QStringLiteral("/api/v10/channels/%1/messages").arg(discordChannelId));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    QByteArray authHeader("Bot ");
+    authHeader.append(discordToken);
+    request.setRawHeader("Authorization", authHeader);
+
+    QJsonObject body;
+    body["content"] = text;
+
+    QNetworkReply *reply = discordManager->post(request, QJsonDocument(body).toJson());
+    if (!reply) {
+        qDebug() << "Discord send failed: no reply";
+        return;
+    }
+    activeReplies.insert(reply);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        activeReplies.remove(reply);
+        if (reply->error() != QNetworkReply::NoError) {
+            qDebug() << "Discord send failed:" << reply->errorString();
+        }
+        reply->deleteLater();
+    });
+}
+
+bool MainWindow::canSendNotification() const
+{
+    const bool hasConfig = !discordToken.isEmpty() && !discordChannelId.isEmpty();
+    const bool cooldownReady = !notificationCooldown.isValid() || notificationCooldown.elapsed() >= kNotificationCooldownMs;
+    return hasConfig && cooldownReady && !notificationSent;
 }

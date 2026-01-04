@@ -9,7 +9,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # 尋找 Qt6 套件
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network)
 
 # 尋找 OpenCV
 find_package(OpenCV REQUIRED)
@@ -42,6 +42,7 @@ target_link_libraries(face PRIVATE
     Qt6::Core
     Qt6::Widgets
     Qt6::Sql
+    Qt6::Network
     ${OpenCV_LIBS}
 )
 
