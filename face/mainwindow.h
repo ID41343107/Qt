@@ -61,6 +61,6 @@ private:
     QString discordChannelId;
     QString discordMessageText;
     bool notificationSent = false;
-    QElapsedTimer notificationCooldown;
+    QElapsedTimer notificationCooldown; // Discord 通知冷卻計時器
     QSet<QNetworkReply*> activeReplies;
 };
