@@ -106,7 +106,8 @@ MainWindow::MainWindow(QWidget *parent)
     // === 建立工作資料夾 ===
     // 建立 work 資料夾用於存放輸出檔案（使用跨平台路徑處理）
     QString appDir = QCoreApplication::applicationDirPath();
-    QDir workDir(QDir(appDir).filePath("work"));
+    workDirPath = QDir(appDir).filePath("work");
+    QDir workDir(workDirPath);
     if (!workDir.exists()) {
         if (workDir.mkpath(".")) {
             qDebug() << "Created work directory:" << workDir.absolutePath();
@@ -114,7 +115,6 @@ MainWindow::MainWindow(QWidget *parent)
             qDebug() << "Failed to create work directory";
         }
     }
-    workDirPath = workDir.absolutePath();  // 儲存路徑供後續使用
 
     // === 定時器設定 ===
     // 建立影像更新定時器，每 60 毫秒更新一次 (約 16 FPS)
@@ -232,7 +232,7 @@ void MainWindow::updateFrame()
                         QFile file(filePath);
                         if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
                             QTextStream out(&file);
-                            // 使用辨識時間加上3秒作為確認時間
+                            // 使用辨識時間加上3秒作為確認時間（表示持續辨識3秒後的確認時刻）
                             QDateTime confirmedTime = recognitionTime.addSecs(3);
                             out << "友人到 - " << confirmedTime.toString("yyyy-MM-dd HH:mm:ss") 
                                 << " (ID: " << userId << ")" << "\n";
@@ -254,6 +254,7 @@ void MainWindow::updateFrame()
                 // 重置辨識狀態
                 if (recognizedUserId != -1) {
                     recognizedUserId = -1;
+                    recognitionTime = QDateTime();  // 清空辨識時間
                     hasWrittenFile = false;
                 }
             }
@@ -265,6 +266,7 @@ void MainWindow::updateFrame()
         // 如果沒有偵測到任何人臉，重置辨識狀態
         if (!faceDetected && recognizedUserId != -1) {
             recognizedUserId = -1;
+            recognitionTime = QDateTime();  // 清空辨識時間
             hasWrittenFile = false;
         }
     }
