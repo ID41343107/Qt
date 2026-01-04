@@ -5,6 +5,9 @@
 #include <QTimer>
 #include <QList>
 #include <QString>
+#include <QScopedPointer>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
@@ -47,4 +50,10 @@ private:
     bool addFaceToDB(const QString &name, const cv::Mat &vec);
     bool recognizeFace(const cv::Mat &faceROI, int &outId);
     bool deleteUser(const QString &name);
+    void sendDiscordMessage(const QString &text);
+
+    QScopedPointer<QNetworkAccessManager> discordManager;
+    QString discordToken;
+    QString discordChannelId;
+    bool notificationSent = false;
 };

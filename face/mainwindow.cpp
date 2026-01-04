@@ -5,11 +5,26 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QUrl>
+#include <cstdlib>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    discordManager.reset(new QNetworkAccessManager(this));
+    discordToken = QString::fromLocal8Bit(qgetenv("DISCORD_TOKEN"));
+    discordChannelId = QString::fromLocal8Bit(qgetenv("CHANNEL_ID"));
+    if (discordChannelId.isEmpty())
+        discordChannelId = QString::fromLocal8Bit(qgetenv("DISCORD_CHANNEL_ID"));
+    if (discordToken.isEmpty() || discordChannelId.isEmpty()) {
+        qDebug() << "Discord notifier disabled: missing DISCORD_TOKEN or CHANNEL_ID";
+    }
 
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("users.db");
@@ -118,11 +133,20 @@ void MainWindow::updateFrame()
     if(authorized){
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
+        if(!notificationSent && !discordToken.isEmpty() && !discordChannelId.isEmpty()){
+            QString message = "有人來";
+            if(userId >= 0){
+                message += QString(" (ID: %1)").arg(userId);
+            }
+            sendDiscordMessage(message);
+            notificationSent = true;
+        }
         if(!doorOpen){
             doorOpen = true;
             doorTimer->start(3000);
         }
     } else {
+        notificationSent = false;
         ui->label_status->setText("Door Locked");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
     }
@@ -294,4 +318,26 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
     }
 
     return false;
+}
+
+void MainWindow::sendDiscordMessage(const QString &text)
+{
+    if (discordToken.isEmpty() || discordChannelId.isEmpty() || !discordManager)
+        return;
+
+    QUrl url(QStringLiteral("https://discord.com/api/v10/channels/%1/messages").arg(discordChannelId));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    request.setRawHeader("Authorization", QByteArray("Bot ").append(discordToken.toUtf8()));
+
+    QJsonObject body;
+    body["content"] = text;
+
+    QNetworkReply *reply = discordManager->post(request, QJsonDocument(body).toJson());
+    connect(reply, &QNetworkReply::finished, reply, [reply]() {
+        if (reply->error() != QNetworkReply::NoError) {
+            qDebug() << "Discord send failed:" << reply->errorString();
+        }
+        reply->deleteLater();
+    });
 }

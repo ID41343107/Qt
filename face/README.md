@@ -145,6 +145,12 @@ cmake --build . --config Release
 2. 點擊「刪除使用者」按鈕
 3. 系統會從資料庫中移除該使用者資料
 
+### 5. Discord 通知（可選）
+- 若要在辨識授權時同步發送 Discord 訊息，啟動程式前設定下列環境變數：
+  - `DISCORD_TOKEN`: Discord Bot Token
+  - `CHANNEL_ID`（或 `DISCORD_CHANNEL_ID`）: 目標頻道 ID
+- 授權時會傳送「有人來 (ID: x)」訊息至指定頻道
+
 ## 注意事項
 
 ### 攝影機無法開啟
