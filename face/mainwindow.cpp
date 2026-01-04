@@ -97,7 +97,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 當辨識成功後，門會開啟 3 秒後自動關閉
     doorTimer = new QTimer(this);
     doorTimer->setSingleShot(true);
-    connect(doorTimer, &QTimer::timeout, this, [=]() {
+    connect(doorTimer, &QTimer::timeout, this, [this]() {
         doorOpen = false;
         ui->label_status->setText("Door Locked");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
