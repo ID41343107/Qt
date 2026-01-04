@@ -19,10 +19,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     discordManager.reset(new QNetworkAccessManager(this));
-    discordToken = QString::fromLocal8Bit(qgetenv("DISCORD_TOKEN")).trimmed();
+    discordToken = qgetenv("DISCORD_TOKEN").trimmed();
     discordChannelId = QString::fromLocal8Bit(qgetenv("CHANNEL_ID")).trimmed();
     if (discordChannelId.isEmpty())
         discordChannelId = QString::fromLocal8Bit(qgetenv("DISCORD_CHANNEL_ID")).trimmed();
+    discordMessageText = QString::fromLocal8Bit(qgetenv("DISCORD_MESSAGE")).trimmed();
+    if (discordMessageText.isEmpty()) {
+        discordMessageText = tr("有人來", "Discord notification when a recognized user is detected");
+    }
 
     const QRegularExpression idPattern(QStringLiteral("^\\d+$"));
     if (!discordChannelId.isEmpty() && !idPattern.match(discordChannelId).hasMatch()) {
@@ -30,8 +34,9 @@ MainWindow::MainWindow(QWidget *parent)
         discordChannelId.clear();
     }
 
+    const QString tokenString = QString::fromLocal8Bit(discordToken);
     const QRegularExpression tokenWhitespace(QStringLiteral("\\s"));
-    if (!discordToken.isEmpty() && discordToken.contains(tokenWhitespace)) {
+    if (!tokenString.isEmpty() && tokenString.contains(tokenWhitespace)) {
         qDebug() << "Discord notifier disabled: token contains whitespace";
         discordToken.clear();
     }
@@ -104,14 +109,14 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     cap.release();
-    const auto repliesCopy = activeReplies;
-    for (QNetworkReply *reply : repliesCopy) {
+    for (QNetworkReply *reply : activeReplies) {
         if (reply) {
             reply->abort();
             reply->deleteLater();
         }
     }
     activeReplies.clear();
+    discordToken.fill(0);
     delete ui;
 }
 
@@ -156,7 +161,7 @@ void MainWindow::updateFrame()
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
         if(!notificationSent && !discordToken.isEmpty() && !discordChannelId.isEmpty()){
-            QString message = tr("有人來", "Discord notification when a recognized user is detected");
+            QString message = discordMessageText;
             if(userId >= 0){
                 message += QString(" (ID: %1)").arg(userId);
             }
@@ -347,10 +352,14 @@ void MainWindow::sendDiscordMessage(const QString &text)
     if (discordToken.isEmpty() || discordChannelId.isEmpty() || !discordManager)
         return;
 
-    QUrl url(QStringLiteral("https://discord.com/api/v10/channels/%1/messages").arg(discordChannelId));
+    QUrl url(QStringLiteral("https://discord.com/api/v10/"));
+    const QString encodedChannelId = QString::fromLatin1(QUrl::toPercentEncoding(discordChannelId));
+    url.setPath(QStringLiteral("/channels/%1/messages").arg(encodedChannelId));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
-    request.setRawHeader("Authorization", QByteArray("Bot ").append(discordToken.toUtf8()));
+    QByteArray authHeader("Bot ");
+    authHeader.append(discordToken);
+    request.setRawHeader("Authorization", authHeader);
 
     QJsonObject body;
     body["content"] = text;
