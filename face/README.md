@@ -169,19 +169,58 @@ cmake --build . --config Release
 - 檢查 `.pro` 檔案中的 OpenCV 路徑設定
 
 ### Windows 連結器錯誤 (ld returned 1 exit status)
-**常見原因：編譯器與 OpenCV 函式庫不匹配**
-- **MinGW 編譯器**：必須使用 MinGW 版本的 OpenCV
-  - 路徑：`C:/opencv/build/x64/mingw/lib`
-  - 函式庫：`opencv_world4120d.dll` (debug) 或 `opencv_world4120.dll` (release)
-- **MSVC 編譯器**：必須使用 MSVC 版本的 OpenCV
-  - 路徑：`C:/opencv/build/x64/vc16/lib`
-  - 函式庫：`opencv_world4120d.dll` (debug) 或 `opencv_world4120.dll` (release)
 
-**解決方法：**
-1. 確認您的 Qt 使用的編譯器類型（MinGW 或 MSVC）
-2. 下載對應編譯器版本的 OpenCV
-3. 或者，切換 Qt 使用的編譯器以匹配您已安裝的 OpenCV 版本
-4. 確保 OpenCV 的 DLL 檔案在系統 PATH 中或與執行檔同目錄
+這是最常見的 Windows 編譯問題。請依序檢查以下項目：
+
+#### 1. 確認 OpenCV 已正確安裝
+檢查以下路徑是否存在：
+- MinGW 版本：`C:/opencv/build/x64/mingw/lib/libopencv_world4120d.a`
+- MSVC 版本：`C:/opencv/build/x64/vc16/lib/opencv_world4120d.lib`
+
+如果路徑不存在或版本號不同（如 470、480），請：
+
+**方法一：調整 face.pro 檔案**
+1. 開啟 `face/face.pro`
+2. 找到這幾行（約第 30-35 行）：
+   ```qmake
+   isEmpty(OPENCV_DIR) {
+       OPENCV_DIR = C:/opencv/build
+   }
+   isEmpty(OPENCV_VERSION) {
+       OPENCV_VERSION = 4120
+   }
+   ```
+3. 修改 `OPENCV_DIR` 為您的 OpenCV 安裝路徑
+4. 修改 `OPENCV_VERSION` 為您的版本號（如 `470` 或 `480`）
+
+**方法二：下載正確的 OpenCV 版本**
+- 從 [OpenCV Releases](https://opencv.org/releases/) 下載 Windows 版本
+- 確保下載的版本包含您使用的編譯器（MinGW 或 MSVC）
+- 解壓縮到 `C:/opencv`
+
+#### 2. 確認編譯器類型匹配
+在 Qt Creator 中：
+1. 查看「專案」→「建置套件」
+2. 確認使用的編譯器（MinGW 或 MSVC）
+3. 確保 OpenCV 版本與編譯器匹配：
+   - **MinGW 64-bit** → 使用 `opencv/build/x64/mingw/lib`
+   - **MSVC 2019/2022** → 使用 `opencv/build/x64/vc16/lib`
+
+#### 3. 執行完整重建
+1. 在 Qt Creator 中：「建置」→「清除全部」
+2. 「建置」→「執行 qmake」（重要！）
+3. 「建置」→「重建專案」
+
+#### 4. 檢查建置輸出
+在「編譯輸出」視窗中查看：
+- `Using OpenCV directory: ...` - 確認路徑正確
+- `Detected MinGW compiler` 或 `Detected MSVC compiler` - 確認偵測正確
+- `OpenCV library directory: ...` - 確認函式庫路徑正確
+
+如果以上都無法解決，請提供：
+- 完整的建置輸出訊息
+- 您的 OpenCV 安裝路徑
+- Qt Creator 使用的編譯器類型
 
 ### 辨識準確度問題
 - 確保光線充足且均勻
