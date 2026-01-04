@@ -64,7 +64,7 @@ win32 {
             OPENCV_LIB_SUFFIX = d
             BUILD_TYPE = debug
         } else {
-            OPENCV_LIB_SUFFIX = 
+            OPENCV_LIB_SUFFIX =  # Empty for release builds (no 'd' suffix)
             BUILD_TYPE = release
         }
         
@@ -89,7 +89,7 @@ win32 {
             OPENCV_LIB_SUFFIX = d
             BUILD_TYPE = debug
         } else {
-            OPENCV_LIB_SUFFIX = 
+            OPENCV_LIB_SUFFIX =  # Empty for release builds (no 'd' suffix)
             BUILD_TYPE = release
         }
         
@@ -114,6 +114,4 @@ win32 {
             LIBS += -L$$shell_quote($$OPENCV_LIB_DIR) -lopencv_world$${OPENCV_VERSION}
         }
     }
-    
-    message("OpenCV library directory: $$OPENCV_LIB_DIR")
 }

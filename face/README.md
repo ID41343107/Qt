@@ -183,7 +183,7 @@ cmake --build . --config Release
 
 **方法一：調整 face.pro 檔案（推薦）**
 1. 開啟 `face/face.pro`
-2. 找到這幾行（約第 45-50 行）：
+2. 在檔案中找到 OpenCV 配置區段，包含以下內容：
    ```qmake
    isEmpty(OPENCV_DIR) {
        OPENCV_DIR = C:/opencv/build
