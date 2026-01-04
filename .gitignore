@@ -16,6 +16,9 @@ release/
 Debug/
 Release/
 
+# Circular symlink that was causing issues
+face/face
+
 # Compiled files
 *.o
 *.obj
