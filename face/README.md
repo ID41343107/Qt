@@ -2,6 +2,19 @@
 
 基於 Qt 和 OpenCV 的人臉辨識門禁系統
 
+## ⚠️ Windows 使用者必讀
+
+**如果遇到 `'opencv2/opencv.hpp' file not found` 編譯錯誤，請先閱讀：**
+### 📘 [Windows 安裝指南 (WINDOWS_SETUP.md)](WINDOWS_SETUP.md)
+
+該文件提供：
+- ✅ OpenCV 安裝與配置步驟
+- ✅ 環境變數設定教學
+- ✅ 常見錯誤解決方案
+- ✅ 逐步疑難排解指南
+
+---
+
 ## 系統需求
 
 - Qt 6.x 或更高版本
@@ -27,9 +40,13 @@ sudo apt-get install libqt6sql6-sqlite
 ### 2. 安裝 OpenCV
 
 #### Windows
+**詳細步驟請參閱 [WINDOWS_SETUP.md](WINDOWS_SETUP.md)**
+
+簡要步驟：
 1. 從 [OpenCV 官網](https://opencv.org/releases/) 下載 OpenCV 4.x
 2. 解壓縮到 `C:/opencv/`
-3. 將 OpenCV bin 目錄加入系統 PATH
+3. 設定環境變數 `OPENCV_DIR` 和 `OPENCV_VERSION`（參閱 WINDOWS_SETUP.md）
+4. 將 OpenCV bin 目錄加入系統 PATH
 
 #### Linux (Ubuntu/Debian)
 ```bash
@@ -161,6 +178,17 @@ cmake --build . --config Release
 - 查看終端機輸出的錯誤訊息以確認問題
 
 ### OpenCV 編譯錯誤
+
+#### Windows 使用者
+如果遇到 `'opencv2/opencv.hpp' file not found` 錯誤，請參閱 **[Windows 安裝指南 (WINDOWS_SETUP.md)](WINDOWS_SETUP.md)** 以獲取詳細的解決方案。
+
+簡要步驟：
+1. 安裝 OpenCV 到 `C:\opencv\`
+2. 設定環境變數：`OPENCV_DIR` 和 `OPENCV_VERSION`
+3. 重啟 Qt Creator
+4. 執行 qmake 並重新編譯
+
+#### Linux 使用者
 - 確認已安裝正確版本的 OpenCV
 - Linux 系統可能需要安裝 pkg-config：
   ```bash
@@ -170,57 +198,17 @@ cmake --build . --config Release
 
 ### Windows 連結器錯誤 (ld returned 1 exit status)
 
-這是最常見的 Windows 編譯問題。請依序檢查以下項目：
+這是最常見的 Windows 編譯問題。**請參閱 [WINDOWS_SETUP.md](WINDOWS_SETUP.md) 以獲取完整的解決方案。**
 
-#### 1. 確認 OpenCV 已正確安裝
-檢查以下路徑是否存在：
-- MinGW 版本：`C:/opencv/build/x64/mingw/lib/libopencv_world4120d.a`
-- MSVC 版本：`C:/opencv/build/x64/vc16/lib/opencv_world4120d.lib`
+快速檢查清單：
+1. ✅ 已安裝 OpenCV 且路徑正確
+2. ✅ 已設定 `OPENCV_DIR` 環境變數
+3. ✅ 已設定 `OPENCV_VERSION` 環境變數  
+4. ✅ OpenCV 編譯版本與 Qt 編譯器匹配（MinGW 或 MSVC）
+5. ✅ 已重啟 Qt Creator
+6. ✅ 已執行「Run qmake」→「Rebuild All」
 
-如果路徑不存在或版本號不同（如 470、480），請：
-
-**方法一：調整 face.pro 檔案**
-1. 開啟 `face/face.pro`
-2. 找到這幾行（約第 30-35 行）：
-   ```qmake
-   isEmpty(OPENCV_DIR) {
-       OPENCV_DIR = C:/opencv/build
-   }
-   isEmpty(OPENCV_VERSION) {
-       OPENCV_VERSION = 4120
-   }
-   ```
-3. 修改 `OPENCV_DIR` 為您的 OpenCV 安裝路徑
-4. 修改 `OPENCV_VERSION` 為您的版本號（如 `470` 或 `480`）
-
-**方法二：下載正確的 OpenCV 版本**
-- 從 [OpenCV Releases](https://opencv.org/releases/) 下載 Windows 版本
-- 確保下載的版本包含您使用的編譯器（MinGW 或 MSVC）
-- 解壓縮到 `C:/opencv`
-
-#### 2. 確認編譯器類型匹配
-在 Qt Creator 中：
-1. 查看「專案」→「建置套件」
-2. 確認使用的編譯器（MinGW 或 MSVC）
-3. 確保 OpenCV 版本與編譯器匹配：
-   - **MinGW 64-bit** → 使用 `opencv/build/x64/mingw/lib`
-   - **MSVC 2019/2022** → 使用 `opencv/build/x64/vc16/lib`
-
-#### 3. 執行完整重建
-1. 在 Qt Creator 中：「建置」→「清除全部」
-2. 「建置」→「執行 qmake」（重要！）
-3. 「建置」→「重建專案」
-
-#### 4. 檢查建置輸出
-在「編譯輸出」視窗中查看：
-- `Using OpenCV directory: ...` - 確認路徑正確
-- `Detected MinGW compiler` 或 `Detected MSVC compiler` - 確認偵測正確
-- `OpenCV library directory: ...` - 確認函式庫路徑正確
-
-如果以上都無法解決，請提供：
-- 完整的建置輸出訊息
-- 您的 OpenCV 安裝路徑
-- Qt Creator 使用的編譯器類型
+詳細的逐步說明和疑難排解請參閱 WINDOWS_SETUP.md 文件。
 
 ### 辨識準確度問題
 - 確保光線充足且均勻

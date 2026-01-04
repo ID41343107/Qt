@@ -38,25 +38,57 @@ unix {
 }
 
 # Windows OpenCV configuration
-# IMPORTANT: Adjust these paths to match your OpenCV installation!
-# Default assumes OpenCV 4.x is installed at C:/opencv
+# ============================================================================
+# IMPORTANT: You MUST configure OpenCV paths before building!
+# ============================================================================
+# 
+# Method 1: Set environment variables (RECOMMENDED)
+#   Set these in Windows System Environment Variables:
+#   - OPENCV_DIR = C:/opencv/build  (or your OpenCV installation path)
+#   - OPENCV_VERSION = 4120         (your OpenCV version, e.g., 470, 480, 4120)
+#
+# Method 2: Edit this file directly
+#   Uncomment and modify the lines below:
+#   OPENCV_DIR = C:/opencv/build
+#   OPENCV_VERSION = 4120
+#
+# How to find your OpenCV version:
+#   Look in your OpenCV lib folder for files like:
+#   - libopencv_world470.a  -> version is 470
+#   - opencv_world480d.lib  -> version is 480
+#   - libopencv_world4120.a -> version is 4120
+# ============================================================================
 win32 {
-    # You can customize these variables to match your installation
+    # Check for environment variables first, then use defaults
+    isEmpty(OPENCV_DIR) {
+        OPENCV_DIR = $$(OPENCV_DIR)
+    }
     isEmpty(OPENCV_DIR) {
         OPENCV_DIR = C:/opencv/build
+        warning("OPENCV_DIR not set. Using default: $$OPENCV_DIR")
+        warning("If build fails, please set OPENCV_DIR environment variable or edit face.pro")
+    }
+    
+    isEmpty(OPENCV_VERSION) {
+        OPENCV_VERSION = $$(OPENCV_VERSION)
     }
     isEmpty(OPENCV_VERSION) {
         OPENCV_VERSION = 4120
+        warning("OPENCV_VERSION not set. Using default: $$OPENCV_VERSION")
+        warning("If build fails, please set OPENCV_VERSION environment variable or edit face.pro")
     }
     
-    message("Using OpenCV directory: $$OPENCV_DIR")
-    message("Using OpenCV version: $$OPENCV_VERSION")
+    message("=========================================")
+    message("OpenCV Configuration:")
+    message("  OPENCV_DIR = $$OPENCV_DIR")
+    message("  OPENCV_VERSION = $$OPENCV_VERSION")
     
+    # Add OpenCV include directory
     INCLUDEPATH += $$OPENCV_DIR/include
     
-    # Detect compiler type
+    # Detect compiler type and set library paths
     win32-msvc* {
-        message("Detected MSVC compiler")
+        message("  Compiler: MSVC")
         OPENCV_LIB_DIR = $$OPENCV_DIR/x64/vc16/lib
         CONFIG(debug, debug|release) {
             LIBS += -L$$OPENCV_LIB_DIR -lopencv_world$${OPENCV_VERSION}d
@@ -64,7 +96,7 @@ win32 {
             LIBS += -L$$OPENCV_LIB_DIR -lopencv_world$${OPENCV_VERSION}
         }
     } else:win32-g++ {
-        message("Detected MinGW compiler")
+        message("  Compiler: MinGW (g++)")
         OPENCV_LIB_DIR = $$OPENCV_DIR/x64/mingw/lib
         CONFIG(debug, debug|release) {
             LIBS += -L$$OPENCV_LIB_DIR -lopencv_world$${OPENCV_VERSION}d
@@ -72,7 +104,7 @@ win32 {
             LIBS += -L$$OPENCV_LIB_DIR -lopencv_world$${OPENCV_VERSION}
         }
     } else {
-        warning("Unknown Windows compiler. Trying MinGW paths.")
+        message("  Compiler: Unknown (trying MinGW paths)")
         OPENCV_LIB_DIR = $$OPENCV_DIR/x64/mingw/lib
         CONFIG(debug, debug|release) {
             LIBS += -L$$OPENCV_LIB_DIR -lopencv_world$${OPENCV_VERSION}d
@@ -81,5 +113,16 @@ win32 {
         }
     }
     
-    message("OpenCV library directory: $$OPENCV_LIB_DIR")
+    message("  Library Dir: $$OPENCV_LIB_DIR")
+    message("=========================================")
+    
+    # Verify paths exist
+    !exists($$OPENCV_DIR/include) {
+        error("OpenCV include directory not found: $$OPENCV_DIR/include")
+        error("Please install OpenCV or set OPENCV_DIR correctly!")
+    }
+    !exists($$OPENCV_LIB_DIR) {
+        error("OpenCV library directory not found: $$OPENCV_LIB_DIR")
+        error("Please check OPENCV_DIR and ensure OpenCV is built for your compiler!")
+    }
 }
