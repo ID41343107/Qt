@@ -24,34 +24,69 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-# OpenCV configuration
+# ============================================================================
+# OpenCV Library Configuration
+# ============================================================================
+# This section configures OpenCV linking for different platforms.
+# Make sure OpenCV is properly installed before building the project.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Linux Configuration
+# ----------------------------------------------------------------------------
+# Uses pkg-config to automatically detect OpenCV installation
+# Requires: libopencv-dev package installed via apt-get
 unix:!macx {
-    # Linux - use pkg-config to find OpenCV
     CONFIG += link_pkgconfig
     PKGCONFIG += opencv4
 }
 
+# ----------------------------------------------------------------------------
+# Windows Configuration
+# ----------------------------------------------------------------------------
+# Important: Verify the following paths match your OpenCV installation!
+# Default installation path: C:/opencv/
+# If you installed OpenCV elsewhere, update all paths below accordingly.
+#
+# Required directory structure:
+#   C:/opencv/build/include/           - Header files
+#   C:/opencv/build/x64/vc16/lib/      - Library files (.lib)
+#   C:/opencv/build/x64/vc16/bin/      - DLL files (must be in PATH)
+#
+# Compiler compatibility:
+#   - vc16 = Visual Studio 2019
+#   - vc15 = Visual Studio 2017  (change path if using this)
+#   - mingw = MinGW compiler     (change to x64/mingw if using this)
+# ----------------------------------------------------------------------------
+
 win32 {
-    # Windows - use OpenCV installed in C:/opencv
-    # Note: Update the version number (4120) in the library names below 
-    # to match your installed OpenCV version (e.g., 4120 = OpenCV 4.12.0)
+    # Include path for OpenCV headers
     INCLUDEPATH += C:/opencv/build/include
 }
 
+# Debug build configuration for Windows
+# Library name format: opencv_worldXXXXd.lib where XXXX is version number
+# Example: opencv_world4120d = OpenCV 4.12.0 Debug version
 win32:CONFIG(debug, debug|release) {
-    # Debug 時連 debug 版的 lib
     LIBS += -LC:/opencv/build/x64/vc16/lib \
             -lopencv_world4120d
 }
 
+# Release build configuration for Windows  
+# Library name format: opencv_worldXXXX.lib where XXXX is version number
+# Example: opencv_world4120 = OpenCV 4.12.0 Release version
 win32:CONFIG(release, debug|release) {
-    # Release 時連 release 版的 lib
     LIBS += -LC:/opencv/build/x64/vc16/lib \
             -lopencv_world4120
 }
 
+# ----------------------------------------------------------------------------
+# macOS Configuration
+# ----------------------------------------------------------------------------
+# Uses pkg-config with Homebrew OpenCV installation
+# Install OpenCV via: brew install opencv
+# ----------------------------------------------------------------------------
 macx {
-    # macOS - use pkg-config or Homebrew OpenCV
     CONFIG += link_pkgconfig
     PKGCONFIG += opencv4
 }
