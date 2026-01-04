@@ -1114,7 +1114,7 @@ debug/mainwindow.o: mainwindow.cpp mainwindow.h \
 		../../../opencv/build/include/opencv2/video.hpp \
 		../../../opencv/build/include/opencv2/video/tracking.hpp \
 		../../../opencv/build/include/opencv2/video/background_segm.hpp \
-		debug/ui_mainwindow.h \
+		ui_mainwindow.h \
 		../../../Qt/6.9.2/mingw_64/include/QtCore/QVariant \
 		../../../Qt/6.9.2/mingw_64/include/QtWidgets/QApplication \
 		../../../Qt/6.9.2/mingw_64/include/QtWidgets/qapplication.h \
