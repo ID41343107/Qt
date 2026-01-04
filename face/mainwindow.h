@@ -1,7 +1,7 @@
 /**
  * @file mainwindow.h
  * @brief 主視窗類別標頭檔
- * @description 定義移除 OpenCV 後的簡化門禁介面
+ * @description 定義移除 OpenCV 依賴後的簡化門禁介面 (Simplified access UI without OpenCV)
  */
 
 #pragma once

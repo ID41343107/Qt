@@ -10,6 +10,12 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDateTime>
+#include <QString>
+
+namespace {
+const QString kStatusDisabled = QStringLiteral("Face recognition disabled (OpenCV removed)");
+const QString kCameraDisabled = QStringLiteral("Camera preview unavailable (OpenCV removed)");
+}
 
 /**
  * @brief MainWindow 建構子
@@ -31,17 +37,13 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     QSqlQuery q;
-    if(!q.exec("DROP TABLE IF EXISTS users")) {
-        qDebug() << "Failed to drop users table:" << q.lastError().text();
-    }
-
     if(!q.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")) {
         qDebug() << "Create table failed:" << q.lastError().text();
     }
 
-    ui->label_camera->setText("Camera preview unavailable (OpenCV removed)");
+    ui->label_camera->setText(kCameraDisabled);
     ui->label_camera->setAlignment(Qt::AlignCenter);
-    ui->label_status->setText("Face recognition disabled (OpenCV removed)");
+    ui->label_status->setText(kStatusDisabled);
     ui->label_status->setStyleSheet("color:orange; font-weight:bold;");
 
     timer = new QTimer(this);
@@ -65,7 +67,8 @@ MainWindow::~MainWindow()
 void MainWindow::updateFrame()
 {
     ui->label_status->setText(
-        QString("Face recognition disabled (OpenCV removed)\n%1")
+        QString("%1\n%2")
+            .arg(kStatusDisabled)
             .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")));
 }
 
