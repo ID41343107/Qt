@@ -22,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // Discord 設定讀取（環境變數），未提供時視為停用
     discordManager.reset(new QNetworkAccessManager(this));
     discordToken = qgetenv("DISCORD_TOKEN").trimmed();
     QByteArray channelEnv = qgetenv("CHANNEL_ID").trimmed();
