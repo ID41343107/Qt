@@ -39,7 +39,8 @@ echo "3/3 正在下載 openface_nn4.small2.v1.t7..."
 if [ -f "openface_nn4.small2.v1.t7" ]; then
     echo "   檔案已存在，跳過下載"
 else
-    # 注意: 原始檔案名稱包含點號，下載後重新命名為底線格式以保持一致性
+    # 注意: 原始檔案名稱為 openface.nn4.small2.v1.t7
+    # 下載時重新命名為 openface_nn4.small2.v1.t7 (將 .nn4 改為 _nn4)
     wget -q --show-progress https://github.com/pyannote/pyannote-data/raw/master/openface.nn4.small2.v1.t7 -O openface_nn4.small2.v1.t7
     if [ $? -eq 0 ]; then
         echo "   ✓ 下載成功"
