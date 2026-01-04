@@ -352,9 +352,8 @@ void MainWindow::sendDiscordMessage(const QString &text)
     if (discordToken.isEmpty() || discordChannelId.isEmpty() || !discordManager)
         return;
 
-    QUrl url(QStringLiteral("https://discord.com/api/v10/"));
-    const QString encodedChannelId = QString::fromLatin1(QUrl::toPercentEncoding(discordChannelId));
-    url.setPath(QStringLiteral("/channels/%1/messages").arg(encodedChannelId));
+    QUrl url(QStringLiteral("https://discord.com"));
+    url.setPath(QStringLiteral("/api/v10/channels/%1/messages").arg(discordChannelId));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     QByteArray authHeader("Bot ");
@@ -365,6 +364,10 @@ void MainWindow::sendDiscordMessage(const QString &text)
     body["content"] = text;
 
     QNetworkReply *reply = discordManager->post(request, QJsonDocument(body).toJson());
+    if (!reply) {
+        qDebug() << "Discord send failed: no reply";
+        return;
+    }
     activeReplies.insert(reply);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         activeReplies.remove(reply);
