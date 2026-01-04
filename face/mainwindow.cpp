@@ -546,3 +546,27 @@ bool MainWindow::isModelsLoaded() const
 {
     return !faceNet.empty() && !embedNet.empty();
 }
+
+/**
+ * @brief 刪除指定姓名的使用者
+ * @param name 使用者姓名
+ * @return 刪除成功返回 true，失敗或未刪除任何資料返回 false
+ */
+bool MainWindow::deleteUser(const QString &name)
+{
+    QString trimmedName = name.trimmed();
+    if (trimmedName.isEmpty()) {
+        return false;
+    }
+
+    QSqlQuery q;
+    q.prepare("DELETE FROM users WHERE name = ?");
+    q.addBindValue(trimmedName);
+
+    if (!q.exec()) {
+        qDebug() << "Delete failed:" << q.lastError().text();
+        return false;
+    }
+
+    return q.numRowsAffected() > 0;
+}
