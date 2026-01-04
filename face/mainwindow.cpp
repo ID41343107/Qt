@@ -59,38 +59,55 @@ MainWindow::MainWindow(QWidget *parent)
     usersCache.clear();
 
     // === 深度學習模型載入 ===
-    // 取得模型檔案路徑 (假設在應用程式目錄下的 face/ 資料夾)
-    QString basePath = QCoreApplication::applicationDirPath() + "/face/";
+    // 尋找模型檔案路徑 (自動檢查多個可能的位置)
+    QString prototxtPath = findModelPath(MODEL_FACE_PROTOTXT);
+    QString detectorPath = findModelPath(MODEL_FACE_DETECTOR);
+    QString embeddingPath = findModelPath(MODEL_FACE_EMBEDDING);
 
     // 載入人臉偵測模型 (Caffe SSD)
     // deploy.prototxt: 網路架構定義
     // res10_300x300_ssd_iter_140000.caffemodel: 訓練好的權重
-    try {
-        faceNet = cv::dnn::readNetFromCaffe(
-            (basePath + MODEL_FACE_PROTOTXT).toStdString(),
-            (basePath + MODEL_FACE_DETECTOR).toStdString()
-            );
-    } catch (const cv::Exception& e) {
-        qDebug() << "Failed to load face detection model:" << e.what();
+    if (!prototxtPath.isEmpty() && !detectorPath.isEmpty()) {
+        try {
+            faceNet = cv::dnn::readNetFromCaffe(
+                prototxtPath.toStdString(),
+                detectorPath.toStdString()
+                );
+            qDebug() << "Face detection model loaded successfully";
+        } catch (const cv::Exception& e) {
+            qDebug() << "Failed to load face detection model:" << e.what();
+        }
+    } else {
+        qDebug() << "Face detection model files not found";
     }
 
     // 載入人臉特徵提取模型 (OpenFace)
     // 將人臉影像轉換為 128 維特徵向量
-    try {
-        embedNet = cv::dnn::readNetFromTorch(
-            (basePath + MODEL_FACE_EMBEDDING).toStdString()
-            );
-    } catch (const cv::Exception& e) {
-        qDebug() << "Failed to load face embedding model:" << e.what();
+    if (!embeddingPath.isEmpty()) {
+        try {
+            embedNet = cv::dnn::readNetFromTorch(
+                embeddingPath.toStdString()
+                );
+            qDebug() << "Face embedding model loaded successfully";
+        } catch (const cv::Exception& e) {
+            qDebug() << "Failed to load face embedding model:" << e.what();
+        }
+    } else {
+        qDebug() << "Face embedding model file not found";
     }
 
     // 檢查模型是否載入成功
     if (!isModelsLoaded()) {
+        qDebug() << "==============================================";
         qDebug() << "DNN model load FAILED";
         qDebug() << "Please download the required model files:";
         qDebug() << "  1." << MODEL_FACE_DETECTOR;
-        qDebug() << "  2." << MODEL_FACE_EMBEDDING;
-        qDebug() << "Place them in:" << basePath;
+        qDebug() << "  2." << MODEL_FACE_PROTOTXT;
+        qDebug() << "  3." << MODEL_FACE_EMBEDDING;
+        qDebug() << "Run the download script:";
+        qDebug() << "  Linux/macOS: ./download_models.sh";
+        qDebug() << "  Windows: download_models.bat";
+        qDebug() << "==============================================";
     } else {
         qDebug() << "DNN models loaded OK";
     }
@@ -536,6 +553,49 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
 
     // 沒有找到匹配的人臉
     return false;
+}
+
+/**
+ * @brief 尋找模型檔案路徑
+ * @param filename 模型檔案名稱
+ * @return 找到的完整路徑，若找不到則返回空字串
+ * @description 依序檢查多個可能的路徑位置：
+ *              1. 應用程式目錄下的 face/ 資料夾 (建置目錄)
+ *              2. 應用程式目錄本身 (直接執行的情況)
+ *              3. 原始碼目錄 (開發時期)
+ */
+QString MainWindow::findModelPath(const QString &filename) const
+{
+    QStringList searchPaths;
+    
+    // 1. 應用程式目錄下的 face/ 資料夾 (CMake 建置會將模型複製到這裡)
+    searchPaths << QCoreApplication::applicationDirPath() + "/face/" + filename;
+    
+    // 2. 應用程式目錄本身
+    searchPaths << QCoreApplication::applicationDirPath() + "/" + filename;
+    
+    // 3. 原始碼目錄 (開發時期或直接從原始碼目錄執行)
+    // 假設執行檔在 build/ 子目錄，則往上一層找
+    QDir appDir(QCoreApplication::applicationDirPath());
+    if (appDir.cdUp()) {
+        searchPaths << appDir.absolutePath() + "/" + filename;
+    }
+    
+    // 依序檢查每個路徑
+    for (const QString &path : searchPaths) {
+        if (QFile::exists(path)) {
+            qDebug() << "Found model file:" << path;
+            return path;
+        }
+    }
+    
+    qDebug() << "Model file not found:" << filename;
+    qDebug() << "Searched paths:";
+    for (const QString &path : searchPaths) {
+        qDebug() << "  -" << path;
+    }
+    
+    return QString();  // 找不到檔案
 }
 
 /**

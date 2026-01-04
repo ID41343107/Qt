@@ -103,6 +103,14 @@ private:
     inline static const QString MODEL_FACE_EMBEDDING = "openface_nn4.small2.v1.t7";
 
     /**
+     * @brief 尋找模型檔案路徑
+     * @param filename 模型檔案名稱
+     * @return 找到的完整路徑，若找不到則返回空字串
+     * @description 依序檢查多個可能的路徑位置
+     */
+    QString findModelPath(const QString &filename) const;
+
+    /**
      * @brief 檢查深度學習模型是否已載入
      * @return 模型已載入返回 true，否則返回 false
      */
