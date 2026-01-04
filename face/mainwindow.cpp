@@ -20,9 +20,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     discordManager.reset(new QNetworkAccessManager(this));
     discordToken = qgetenv("DISCORD_TOKEN").trimmed();
-    discordChannelId = QString::fromLocal8Bit(qgetenv("CHANNEL_ID")).trimmed();
-    if (discordChannelId.isEmpty())
-        discordChannelId = QString::fromLocal8Bit(qgetenv("DISCORD_CHANNEL_ID")).trimmed();
+    QByteArray channelEnv = qgetenv("CHANNEL_ID").trimmed();
+    if (channelEnv.isEmpty())
+        channelEnv = qgetenv("DISCORD_CHANNEL_ID").trimmed();
+    discordChannelId = QString::fromUtf8(channelEnv).trimmed();
     discordMessageText = QString::fromLocal8Bit(qgetenv("DISCORD_MESSAGE")).trimmed();
     if (discordMessageText.isEmpty()) {
         discordMessageText = tr("有人來", "Discord notification when a recognized user is detected");
@@ -34,12 +35,14 @@ MainWindow::MainWindow(QWidget *parent)
         discordChannelId.clear();
     }
 
-    const QString tokenString = QString::fromLocal8Bit(discordToken);
+    QString tokenString = QString::fromLocal8Bit(discordToken);
     const QRegularExpression tokenWhitespace(QStringLiteral("\\s"));
     if (!tokenString.isEmpty() && tokenString.contains(tokenWhitespace)) {
         qDebug() << "Discord notifier disabled: token contains whitespace";
         discordToken.clear();
     }
+    tokenString.fill(u'0');
+    tokenString.clear();
 
     if (discordToken.isEmpty() || discordChannelId.isEmpty()) {
         qDebug() << "Discord notifier disabled: missing DISCORD_TOKEN or CHANNEL_ID";
@@ -160,12 +163,14 @@ void MainWindow::updateFrame()
     if(authorized){
         ui->label_status->setText("Authorized\nID: " + QString::number(userId));
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
-        if(!notificationSent && !discordToken.isEmpty() && !discordChannelId.isEmpty()){
+        const bool cooldownReady = !notificationCooldown.isValid() || notificationCooldown.elapsed() >= 3000;
+        if(!notificationSent && !discordToken.isEmpty() && !discordChannelId.isEmpty() && cooldownReady){
             QString message = discordMessageText;
             if(userId >= 0){
                 message += QString(" (ID: %1)").arg(userId);
             }
             sendDiscordMessage(message);
+            notificationCooldown.restart();
             notificationSent = true;
         }
         if(!doorOpen){

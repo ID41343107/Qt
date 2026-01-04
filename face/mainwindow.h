@@ -10,6 +10,7 @@
 #include <QNetworkReply>
 #include <QSet>
 #include <QByteArray>
+#include <QElapsedTimer>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
@@ -59,5 +60,6 @@ private:
     QString discordChannelId;
     QString discordMessageText;
     bool notificationSent = false;
+    QElapsedTimer notificationCooldown;
     QSet<QNetworkReply*> activeReplies;
 };
