@@ -23,8 +23,6 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-INCLUDEPATH += C:/opencv/build/include
-
 # Cross-platform OpenCV configuration
 unix {
     # Linux/Unix: Try to use pkg-config first
@@ -39,26 +37,37 @@ unix {
     }
 }
 
-# MinGW configuration
-win32-g++ {
+# MinGW configuration (must come before MSVC to ensure proper matching)
+win32 {
     INCLUDEPATH += C:/opencv/build/include
-    CONFIG(debug, debug|release) {
-        LIBS += -LC:/opencv/build/x64/mingw/lib \
-                -lopencv_world4120d
+    
+    contains(QMAKE_COMPILER, g++) {
+        # MinGW compiler
+        CONFIG(debug, debug|release) {
+            LIBS += -LC:/opencv/build/x64/mingw/lib \
+                    -lopencv_world4120d
+        } else {
+            LIBS += -LC:/opencv/build/x64/mingw/lib \
+                    -lopencv_world4120
+        }
+    } else:contains(QMAKE_COMPILER, msvc) {
+        # MSVC compiler
+        CONFIG(debug, debug|release) {
+            LIBS += -LC:/opencv/build/x64/vc16/lib \
+                    -lopencv_world4120d
+        } else {
+            LIBS += -LC:/opencv/build/x64/vc16/lib \
+                    -lopencv_world4120
+        }
     } else {
-        LIBS += -LC:/opencv/build/x64/mingw/lib \
-                -lopencv_world4120
-    }
-}
-
-# MSVC configuration
-win32-msvc* {
-    INCLUDEPATH += C:/opencv/build/include
-    CONFIG(debug, debug|release) {
-        LIBS += -LC:/opencv/build/x64/vc16/lib \
-                -lopencv_world4120d
-    } else {
-        LIBS += -LC:/opencv/build/x64/vc16/lib \
-                -lopencv_world4120
+        # Fallback for other Windows compilers - try MinGW path
+        warning("Unknown Windows compiler, using MinGW library paths")
+        CONFIG(debug, debug|release) {
+            LIBS += -LC:/opencv/build/x64/mingw/lib \
+                    -lopencv_world4120d
+        } else {
+            LIBS += -LC:/opencv/build/x64/mingw/lib \
+                    -lopencv_world4120
+        }
     }
 }

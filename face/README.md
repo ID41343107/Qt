@@ -168,6 +168,21 @@ cmake --build . --config Release
   ```
 - 檢查 `.pro` 檔案中的 OpenCV 路徑設定
 
+### Windows 連結器錯誤 (ld returned 1 exit status)
+**常見原因：編譯器與 OpenCV 函式庫不匹配**
+- **MinGW 編譯器**：必須使用 MinGW 版本的 OpenCV
+  - 路徑：`C:/opencv/build/x64/mingw/lib`
+  - 函式庫：`opencv_world4120d.dll` (debug) 或 `opencv_world4120.dll` (release)
+- **MSVC 編譯器**：必須使用 MSVC 版本的 OpenCV
+  - 路徑：`C:/opencv/build/x64/vc16/lib`
+  - 函式庫：`opencv_world4120d.dll` (debug) 或 `opencv_world4120.dll` (release)
+
+**解決方法：**
+1. 確認您的 Qt 使用的編譯器類型（MinGW 或 MSVC）
+2. 下載對應編譯器版本的 OpenCV
+3. 或者，切換 Qt 使用的編譯器以匹配您已安裝的 OpenCV 版本
+4. 確保 OpenCV 的 DLL 檔案在系統 PATH 中或與執行檔同目錄
+
 ### 辨識準確度問題
 - 確保光線充足且均勻
 - 臉部需完整且清晰出現在畫面中
