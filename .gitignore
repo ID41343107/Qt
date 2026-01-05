@@ -1,51 +1,82 @@
-# Qt-specific
-*.pro.user
-*.pro.user.*
-.qmake.stash
-moc_*.cpp
-moc_*.h
-qrc_*.cpp
-ui_*.h
+# This file is used to ignore files which are generated
+# ----------------------------------------------------------------------------
+
+*~
 *.autosave
-
-# Build directories
-build/
-build-*/
-debug/
-release/
-Debug/
-Release/
-
-# Compiled files
+*.a
+*.core
+*.moc
 *.o
 *.obj
-*.exe
-*.app
-*.dll
+*.orig
+*.rej
 *.so
-*.dylib
-*.a
-*.lib
-
-# Database files
-*.db
-*.db-journal
-
-# Work folder (output files)
-work/
-
-# Model files (large files, should be downloaded separately)
-*.caffemodel
-*.t7
-
-# IDE specific
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS specific
+*.so.*
+*_pch.h.cpp
+*_resource.rc
+*.qm
+.#*
+*.*#
+core
+!core/
+tags
 .DS_Store
+.directory
+*.debug
+Makefile*
+*.prl
+*.app
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
 Thumbs.db
-desktop.ini
+*.res
+*.rc
+/.qmake.cache
+/.qmake.stash
+
+# qtcreator generated files
+*.pro.user*
+*.qbs.user*
+CMakeLists.txt.user*
+
+# xemacs temporary files
+*.flc
+
+# Vim temporary files
+.*.swp
+
+# Visual Studio generated files
+*.ib_pdb_index
+*.idb
+*.ilk
+*.pdb
+*.sln
+*.suo
+*.vcproj
+*vcproj.*.*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj
+*vcxproj.*
+
+# MinGW generated files
+*.Debug
+*.Release
+
+# Python byte code
+*.pyc
+
+# Binaries
+# --------
+*.dll
+*.exe
+
+# Directories with generated files
+.moc/
+.obj/
+.pch/
+.rcc/
+.uic/
+/build*/
