@@ -73,6 +73,12 @@ MainWindow::MainWindow(QWidget *parent)
         ui->label_status->setText("Door Locked");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
     });
+
+    notificationTimer = new QTimer(this);
+    notificationTimer->setSingleShot(true);
+    connect(notificationTimer, &QTimer::timeout, this, [=]() {
+        canSendNotification = true;
+    });
 }
 
 MainWindow::~MainWindow()
@@ -124,6 +130,12 @@ void MainWindow::updateFrame()
         if(!doorOpen){
             doorOpen = true;
             doorTimer->start(3000);
+        }
+        // 發送通知（間隔2秒）
+        if(canSendNotification){
+            sendSomeoneHere();
+            canSendNotification = false;
+            notificationTimer->start(2000);
         }
     } else {
         ui->label_status->setText("Door Locked");
@@ -297,4 +309,21 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
     }
 
     return false;
+}
+
+void MainWindow::sendSomeoneHere(const QString &host, quint16 port)
+{
+    QTcpSocket socket;
+    socket.connectToHost(host, port);
+
+    if (socket.waitForConnected(1000)) {
+        QByteArray message = QStringLiteral("有人來").toUtf8();
+        socket.write(message);
+        socket.flush();
+        socket.waitForBytesWritten(1000);
+        socket.disconnectFromHost();
+        qDebug() << "Notification sent: 有人來";
+    } else {
+        qDebug() << "Failed to connect to notification server";
+    }
 }
