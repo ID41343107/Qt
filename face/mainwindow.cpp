@@ -73,6 +73,13 @@ MainWindow::MainWindow(QWidget *parent)
         ui->label_status->setText("Door Locked");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
     });
+
+    // 初始化通知計時器，用於控制通知間隔（2秒）
+    notificationTimer = new QTimer(this);
+    notificationTimer->setSingleShot(true);
+    connect(notificationTimer, &QTimer::timeout, this, [=]() {
+        canSendNotification = true;  // 計時器結束後，允許再次發送通知
+    });
 }
 
 MainWindow::~MainWindow()
@@ -124,6 +131,13 @@ void MainWindow::updateFrame()
         if(!doorOpen){
             doorOpen = true;
             doorTimer->start(3000);
+        }
+        // 發送通知（間隔2秒）
+        // 檢查是否可以發送通知（避免頻繁發送）
+        if(canSendNotification){
+            sendSomeoneHere();  // 發送「有人來」通知
+            canSendNotification = false;  // 暫時禁止發送通知
+            notificationTimer->start(2000);  // 啟動2秒計時器，之後才能再次發送
         }
     } else {
         ui->label_status->setText("Door Locked");
@@ -297,4 +311,29 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
     }
 
     return false;
+}
+
+/**
+ * @brief 發送通知訊息到指定的 TCP 伺服器
+ * @param host 伺服器位址（預設：127.0.0.1）
+ * @param port 伺服器埠號（預設：8888）
+ * 
+ * 功能：當偵測到有人時，透過 TCP Socket 發送「有人來」訊息
+ * 連線逾時設定為 1 秒
+ */
+void MainWindow::sendSomeoneHere(const QString &host, quint16 port)
+{
+    QTcpSocket socket;
+    socket.connectToHost(host, port);  // 連線到指定的伺服器
+
+    if (socket.waitForConnected(1000)) {  // 等待連線成功（最多 1 秒）
+        QByteArray message = QStringLiteral("有人來").toUtf8();  // 準備訊息內容
+        socket.write(message);  // 發送訊息
+        socket.flush();  // 確保訊息立即發送
+        socket.waitForBytesWritten(1000);  // 等待訊息寫入完成（最多 1 秒）
+        socket.disconnectFromHost();  // 中斷連線
+        qDebug() << "Notification sent: 有人來";
+    } else {
+        qDebug() << "Failed to connect to notification server";  // 連線失敗
+    }
 }
