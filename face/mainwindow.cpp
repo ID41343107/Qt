@@ -36,7 +36,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     usersCache.clear();
 
-    QString basePath = QCoreApplication::applicationDirPath() + "/face/";
+    QString basePath = "C:/face2/build/Desktop_Qt_6_9_3_MinGW_64_bit-Debug/debug/debug/face/";
+
+    qDebug() << "模型文件路径:" << basePath;
+    qDebug() << "deploy.prototxt:" << basePath + "deploy.prototxt";
 
     faceNet = cv::dnn::readNetFromCaffe(
         (basePath + "deploy.prototxt").toStdString(),
