@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QList>
 #include <QString>
+#include <QTcpSocket>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
@@ -43,8 +44,17 @@ private:
     bool doorOpen = false;
 
     QList<User> usersCache;
+    
+    QTcpSocket *tcpSocket;
+    QString lastNotifiedName;
+    
+    static constexpr const char* DISCORD_HOST = "127.0.0.1";
+    static constexpr int DISCORD_PORT = 8888;
 
     bool addFaceToDB(const QString &name, const cv::Mat &vec);
     bool recognizeFace(const cv::Mat &faceROI, int &outId);
+    bool recognizeFaceWithName(const cv::Mat &faceROI, QString &outName);
+    bool recognizeFaceInternal(const cv::Mat &faceROI, int *outId, QString *outName);
     bool deleteUser(const QString &name);
+    void sendToDiscord(const QString &message);
 };
