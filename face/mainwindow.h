@@ -41,14 +41,14 @@ private:
     cv::VideoCapture cap;
     QTimer *timer;
     QTimer *doorTimer;
-    QTimer *notificationTimer;
+    QTimer *notificationTimer;  // 通知計時器，用於控制通知間隔
     bool doorOpen = false;
-    bool canSendNotification = true;
+    bool canSendNotification = true;  // 是否可以發送通知，用於實現2秒間隔
 
     QList<User> usersCache;
 
     bool addFaceToDB(const QString &name, const cv::Mat &vec);
     bool recognizeFace(const cv::Mat &faceROI, int &outId);
     bool deleteUser(const QString &name);
-    void sendSomeoneHere(const QString &host = "127.0.0.1", quint16 port = 8888);
+    void sendSomeoneHere(const QString &host = "127.0.0.1", quint16 port = 8888);  // 發送通知訊息到指定伺服器
 };
