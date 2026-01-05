@@ -5,6 +5,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QTcpSocket>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -73,6 +74,18 @@ MainWindow::MainWindow(QWidget *parent)
         ui->label_status->setText("Door Locked");
         ui->label_status->setStyleSheet("color:red; font-weight:bold;");
     });
+
+    // Initialize TCP socket for Discord notifier
+    tcpSocket = new QTcpSocket(this);
+    tcpSocket->connectToHost("127.0.0.1", 8888);
+    
+    connect(tcpSocket, &QTcpSocket::connected, this, [=]() {
+        qDebug() << "Connected to Discord notifier";
+    });
+    
+    connect(tcpSocket, &QTcpSocket::errorOccurred, this, [=](QAbstractSocket::SocketError error) {
+        qDebug() << "TCP socket error:" << tcpSocket->errorString();
+    });
 }
 
 MainWindow::~MainWindow()
@@ -94,7 +107,7 @@ void MainWindow::updateFrame()
     cv::Mat detMat(det.size[2], det.size[3], CV_32F, det.ptr<float>());
 
     bool authorized = false;
-    int userId = -1;
+    QString recognizedName;
 
     for (int i = 0; i < detMat.rows; i++) {
         float conf = detMat.at<float>(i, 2);
@@ -112,14 +125,30 @@ void MainWindow::updateFrame()
         cv::cvtColor(faceROI, faceROI, cv::COLOR_BGR2RGB);
         cv::resize(faceROI, faceROI, cv::Size(96,96));
 
-        if (recognizeFace(faceROI, userId)) {
+        if (recognizeFaceWithName(faceROI, recognizedName)) {
             authorized = true;
+            
+            // Send Discord notification if it's a different person
+            if (recognizedName != lastNotifiedName) {
+                if (recognizedName == "DC") {
+                    sendToDiscord("熟人");
+                } else {
+                    sendToDiscord("陌生人");
+                }
+                lastNotifiedName = recognizedName;
+            }
+        } else {
+            // Unknown face detected - send stranger notification
+            if (lastNotifiedName != "unknown") {
+                sendToDiscord("陌生人");
+                lastNotifiedName = "unknown";
+            }
         }
     }
 
     // 更新 UI
     if(authorized){
-        ui->label_status->setText("Authorized\nID: " + QString::number(userId));
+        ui->label_status->setText("Authorized\nName: " + recognizedName);
         ui->label_status->setStyleSheet("color:green; font-weight:bold;");
         if(!doorOpen){
             doorOpen = true;
@@ -297,4 +326,51 @@ bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
     }
 
     return false;
+}
+
+bool MainWindow::recognizeFaceWithName(const cv::Mat &faceROI, QString &outName)
+{
+    cv::Mat blob = cv::dnn::blobFromImage(faceROI, 1.0/255.0, cv::Size(96,96),
+                                          cv::Scalar(0,0,0), true, false);
+    embedNet.setInput(blob);
+    cv::Mat vec = embedNet.forward();
+
+    QString selectSql = "SELECT id, name";
+    for(int i=1;i<=128;i++) selectSql += QString(", v%1").arg(i);
+    selectSql += " FROM users";
+
+    QSqlQuery q(selectSql);
+
+    while(q.next())
+    {
+        int id = q.value(0).toInt();
+        QString name = q.value(1).toString();
+        cv::Mat dbVec(1,128,CV_32F);
+        for(int i=0;i<128;i++){
+            dbVec.at<float>(0,i) = q.value(i+2).toFloat();
+        }
+
+        float dist = cv::norm(vec - dbVec);
+        if(dist < 0.6){
+            qDebug() << "Recognized Name:" << name << "ID:" << id << "Distance:" << dist;
+            outName = name;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void MainWindow::sendToDiscord(const QString &message)
+{
+    if (tcpSocket->state() == QAbstractSocket::ConnectedState) {
+        QString msg = message + "\n";
+        tcpSocket->write(msg.toUtf8());
+        tcpSocket->flush();
+        qDebug() << "Sent to Discord:" << message;
+    } else {
+        qDebug() << "TCP socket not connected, cannot send message:" << message;
+        // Try to reconnect
+        tcpSocket->connectToHost("127.0.0.1", 8888);
+    }
 }

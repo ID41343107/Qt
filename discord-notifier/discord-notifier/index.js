@@ -44,6 +44,10 @@ const server = net.createServer((socket) => {
 
       if (line === "有人來") {
         await sendToDiscord("有人來");
+      } else if (line === "熟人") {
+        await sendToDiscord("熟人");
+      } else if (line === "陌生人") {
+        await sendToDiscord("陌生人");
       }
     }
   });
