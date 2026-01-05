@@ -4,10 +4,9 @@ This project integrates a Qt-based face recognition system with a Discord notifi
 
 ## Overview
 
-The system detects faces using a camera and sends notifications to Discord based on who is recognized:
-- If the recognized person is named "DC" → sends "熟人" (acquaintance/familiar person) to Discord
-- If the recognized person is someone else → sends "陌生人" (stranger) to Discord
-- If an unknown face is detected → sends "陌生人" (stranger) to Discord
+The system detects faces using a camera and sends notifications to Discord when someone is detected:
+- When any face is detected (recognized or unknown) → sends "有人來" (someone is here) to Discord
+- The Discord bot forwards this notification to the configured Discord channel
 
 ## Components
 
@@ -36,10 +35,7 @@ Located in `/discord-notifier/discord-notifier` directory
 **Features:**
 - TCP server listening on port 8888
 - Discord bot integration using discord.js
-- Handles three message types:
-  - "有人來" (someone is coming)
-  - "熟人" (acquaintance)
-  - "陌生人" (stranger)
+- Handles message: "有人來" (someone is coming)
 
 **Key Files:**
 - `index.js` - Main server logic
@@ -89,7 +85,7 @@ Located in `/discord-notifier/discord-notifier` directory
 
 3. Build and run the Qt application using Qt Creator or command line
 
-4. Register a user named "DC" to trigger the "熟人" (acquaintance) notification
+4. Register users as needed for face recognition
 
 ## How It Works
 
@@ -98,12 +94,9 @@ Located in `/discord-notifier/discord-notifier` directory
 2. **Face Recognition**: When a face is detected, it extracts face embeddings and compares them with stored user embeddings in the SQLite database
 
 3. **Discord Notification**: 
-   - When a face is recognized, the application checks the user's name
-   - If the name is "DC" → sends "熟人" via TCP socket
-   - If the name is anything else → sends "陌生人" via TCP socket
-   - If no match is found → sends "陌生人" via TCP socket
-
-4. **Notification Tracking**: The system tracks the last notified name to avoid sending duplicate notifications for the same person
+   - When any face is detected (recognized or unknown), the application sends "有人來" (someone is here) via TCP socket
+   
+4. **Notification Tracking**: The system tracks the last notified person to avoid sending duplicate notifications for the same person
 
 5. **Discord Relay**: The Discord notifier receives the TCP message and posts it to the configured Discord channel
 
@@ -114,7 +107,7 @@ The Qt application and Discord notifier communicate via TCP socket:
 - **Host**: 127.0.0.1 (localhost)
 - **Port**: 8888
 - **Format**: UTF-8 encoded text messages ending with newline (`\n`)
-- **Supported Messages**: "有人來", "熟人", "陌生人"
+- **Supported Messages**: "有人來"
 
 ## Notes
 

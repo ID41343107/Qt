@@ -133,17 +133,13 @@ void MainWindow::updateFrame()
             
             // Send Discord notification if it's a different person
             if (recognizedName != lastNotifiedName) {
-                if (recognizedName == "DC") {
-                    sendToDiscord("熟人");
-                } else {
-                    sendToDiscord("陌生人");
-                }
+                sendToDiscord("有人來");
                 lastNotifiedName = recognizedName;
             }
         } else {
-            // Unknown face detected - send stranger notification
+            // Unknown face detected - send notification
             if (lastNotifiedName != "unknown") {
-                sendToDiscord("陌生人");
+                sendToDiscord("有人來");
                 lastNotifiedName = "unknown";
             }
         }

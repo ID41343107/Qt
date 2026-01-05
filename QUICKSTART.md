@@ -28,12 +28,12 @@
    Discord logged in as: YourBotName#1234
    ```
 
-### Step 2: Register "DC" User
+### Step 2: Register Users (Optional)
 
 1. Build and run the Qt face recognition application
 
 2. In the application window:
-   - Type "DC" in the name field
+   - Type a user name in the name field
    - Position your face in front of the camera
    - Click the "Register" button
    - Wait for confirmation message
@@ -41,23 +41,16 @@
 ### Step 3: Test the Integration
 
 1. With both the Discord notifier and face app running:
-   - Show your face (registered as "DC") to the camera
-   - Check Discord channel - you should see: **"熟人"** (acquaintance)
+   - Show any face to the camera (registered or unregistered)
+   - Check Discord channel - you should see: **"有人來"** (someone is here)
    
-2. Register another user with a different name (e.g., "Alice"):
-   - Show that person's face to the camera
-   - Check Discord channel - you should see: **"陌生人"** (stranger)
-
-3. Show an unregistered face to the camera:
-   - Check Discord channel - you should see: **"陌生人"** (stranger)
+2. The notification will only be sent when a different person is detected (or when detecting a face after no faces were present)
 
 ## Expected Behavior
 
 | Face Detection | Discord Message |
 |---------------|-----------------|
-| "DC" recognized | 熟人 (acquaintance) |
-| Other registered user | 陌生人 (stranger) |
-| Unknown face | 陌生人 (stranger) |
+| Any face detected | 有人來 (someone is here) |
 | No face detected | (no message, resets state) |
 
 ## Troubleshooting
@@ -74,7 +67,6 @@
 
 ### No notifications received
 - Check if faces are being detected (green rectangle around face)
-- Verify user is properly registered in database
 - Check Qt application console for "Sent to Discord:" messages
 - Check Discord notifier console for "TCP received:" messages
 
