@@ -107,12 +107,15 @@ void MainWindow::updateFrame()
     cv::Mat detMat(det.size[2], det.size[3], CV_32F, det.ptr<float>());
 
     bool authorized = false;
+    bool faceDetected = false;
     QString recognizedName;
 
     for (int i = 0; i < detMat.rows; i++) {
         float conf = detMat.at<float>(i, 2);
         if (conf < 0.6) continue;
 
+        faceDetected = true;
+        
         int x1 = int(detMat.at<float>(i, 3) * frame.cols);
         int y1 = int(detMat.at<float>(i, 4) * frame.rows);
         int x2 = int(detMat.at<float>(i, 5) * frame.cols);
@@ -144,6 +147,11 @@ void MainWindow::updateFrame()
                 lastNotifiedName = "unknown";
             }
         }
+    }
+    
+    // Reset notification state when no face is detected
+    if (!faceDetected && !lastNotifiedName.isEmpty()) {
+        lastNotifiedName.clear();
     }
 
     // 更新 UI
