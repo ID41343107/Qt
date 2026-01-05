@@ -27,8 +27,8 @@ INCLUDEPATH += C:/opencv/build/include
 
 CONFIG(debug, debug|release) {
     LIBS += -LC:/opencv/build/x64/vc16/lib \
-            -lopencv_world4120d
+            -opencv_world4110
 } else {
     LIBS += -LC:/opencv/build/x64/vc16/lib \
-            -lopencv_world4120
+            -opencv_world4110d
 }
