@@ -77,13 +77,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Initialize TCP socket for Discord notifier
     tcpSocket = new QTcpSocket(this);
-    tcpSocket->connectToHost("127.0.0.1", 8888);
+    tcpSocket->connectToHost(DISCORD_HOST, DISCORD_PORT);
     
-    connect(tcpSocket, &QTcpSocket::connected, this, [=]() {
+    connect(tcpSocket, &QTcpSocket::connected, this, [this]() {
         qDebug() << "Connected to Discord notifier";
     });
     
-    connect(tcpSocket, &QTcpSocket::errorOccurred, this, [=](QAbstractSocket::SocketError error) {
+    connect(tcpSocket, &QTcpSocket::errorOccurred, this, [this](QAbstractSocket::SocketError error) {
         qDebug() << "TCP socket error:" << tcpSocket->errorString();
     });
 }
@@ -304,39 +304,7 @@ bool MainWindow::addFaceToDB(const QString &name, const cv::Mat &vec)
     return true;
 }
 
-bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
-{
-    cv::Mat blob = cv::dnn::blobFromImage(faceROI, 1.0/255.0, cv::Size(96,96),
-                                          cv::Scalar(0,0,0), true, false);
-    embedNet.setInput(blob);
-    cv::Mat vec = embedNet.forward();
-
-    QString selectSql = "SELECT id";
-    for(int i=1;i<=128;i++) selectSql += QString(", v%1").arg(i);
-    selectSql += " FROM users";
-
-    QSqlQuery q(selectSql);
-
-    while(q.next())
-    {
-        int id = q.value(0).toInt();
-        cv::Mat dbVec(1,128,CV_32F);
-        for(int i=0;i<128;i++){
-            dbVec.at<float>(0,i) = q.value(i+1).toFloat();
-        }
-
-        float dist = cv::norm(vec - dbVec);
-        if(dist < 0.6){
-            qDebug() << "Recognized ID:" << id << "Distance:" << dist;
-            outId = id;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool MainWindow::recognizeFaceWithName(const cv::Mat &faceROI, QString &outName)
+bool MainWindow::recognizeFaceInternal(const cv::Mat &faceROI, int *outId, QString *outName)
 {
     cv::Mat blob = cv::dnn::blobFromImage(faceROI, 1.0/255.0, cv::Size(96,96),
                                           cv::Scalar(0,0,0), true, false);
@@ -360,13 +328,24 @@ bool MainWindow::recognizeFaceWithName(const cv::Mat &faceROI, QString &outName)
 
         float dist = cv::norm(vec - dbVec);
         if(dist < 0.6){
-            qDebug() << "Recognized Name:" << name << "ID:" << id << "Distance:" << dist;
-            outName = name;
+            if(outId) *outId = id;
+            if(outName) *outName = name;
+            qDebug() << "Recognized - ID:" << id << "Name:" << name << "Distance:" << dist;
             return true;
         }
     }
 
     return false;
+}
+
+bool MainWindow::recognizeFace(const cv::Mat &faceROI, int &outId)
+{
+    return recognizeFaceInternal(faceROI, &outId, nullptr);
+}
+
+bool MainWindow::recognizeFaceWithName(const cv::Mat &faceROI, QString &outName)
+{
+    return recognizeFaceInternal(faceROI, nullptr, &outName);
 }
 
 void MainWindow::sendToDiscord(const QString &message)
@@ -379,6 +358,6 @@ void MainWindow::sendToDiscord(const QString &message)
     } else {
         qDebug() << "TCP socket not connected, cannot send message:" << message;
         // Try to reconnect
-        tcpSocket->connectToHost("127.0.0.1", 8888);
+        tcpSocket->connectToHost(DISCORD_HOST, DISCORD_PORT);
     }
 }
