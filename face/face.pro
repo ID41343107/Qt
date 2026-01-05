@@ -4,10 +4,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += c++17
 
 SOURCES += \
+    ../SomeoneNotifier/someonenotifier.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    ../SomeoneNotifier/someonenotifier.h \
     mainwindow.h
 
 FORMS += \
